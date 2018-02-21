@@ -16,25 +16,27 @@ type libcni struct {
 }
 
 type CNI interface {
-	// Status returns whether the cni plugin is ready.
+	// PluginStatus returns whether the cni plugin is ready.
 	PluginStatus() error
 	// SetupNetworkContainer setups the network Container.
-	SetupContainerNetwork(ID string, netNS string, opts ...ContainerOptions) ([]*current.Result, error)
+	Setup(ID string, netNS string, opts ...ContainerOptions) ([]*current.Result, error)
 	// RemoveNetworkContainer removes the network Container.
-	RemoveContainerNetwork(ID string, netNS string, opts ...ContainerOptions) error
+	Remove(ID string, netNS string, opts ...ContainerOptions) error
 	// ContainerStatus returns the network status of the Container
 	ContainerStatus() *Container
 }
 
 func defaultCNIConfig() *libcni {
-	c := new(libcni)
-	c.pluginDirs = []string{DefaultCNIDir}
-	c.pluginConfDir = DefaultNetDir
-	c.defaultIfName = DefaultIfName
-	return c
+	return &libcni{
+		config: config{
+			pluginDirs:    []string{DefaultCNIDir},
+			pluginConfDir: DefaultNetDir,
+			defaultIfName: DefaultIfName,
+		},
+	}
 }
 
-func Init(config ...ConfigOptions) *libcni {
+func New(config ...ConfigOptions) CNI {
 	cni := defaultCNIConfig()
 	cni.cniConfig = &cnilibrary.CNIConfig{Path: cni.pluginDirs}
 	cni.networks = make(map[string]*cnilibrary.NetworkConfigList)
@@ -110,7 +112,7 @@ func (c *libcni) populateNetworkConfig() error {
 	return nil
 }
 
-func (c *libcni) SetupContainerNetwork(ID string, netNS string, opts ...ContainerOptions) ([]*current.Result, error) {
+func (c *libcni) Setup(ID string, netNS string, opts ...ContainerOptions) ([]*current.Result, error) {
 	container, err := NewContainer(ID, netNS, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Container for %s: %v", ID, err)
@@ -131,7 +133,7 @@ func (c *libcni) SetupContainerNetwork(ID string, netNS string, opts ...Containe
 	return results, nil
 }
 
-func (c *libcni) RemoveContainerNetwork(ID string, netNS string, opts ...ContainerOptions) error {
+func (c *libcni) Remove(ID string, netNS string, opts ...ContainerOptions) error {
 	container, err := NewContainer(ID, netNS, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to remove Container for %s: %v", ID, err)
