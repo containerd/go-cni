@@ -32,6 +32,7 @@ func WithCapabilityIPRanges(ipRanges []IPRanges) ContainerOptions {
 // Args
 func WithLabels(labels map[string]string) ContainerOptions {
 	return func(c *Container) error {
+		c.Labels = make(map[string]string)
 		for k, v := range labels {
 			c.Labels[k] = v
 		}

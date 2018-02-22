@@ -1,9 +1,5 @@
 package libcni
 
-import (
-	"net"
-)
-
 const (
 	CNIPluginName        = "cni"
 	DefaultNetDir        = "/etc/cni/net.d"
@@ -18,16 +14,11 @@ type config struct {
 	defaultIfName string
 }
 
-type Interface struct {
-	IP     []net.IP
-	Mac    net.HardwareAddr
-	Routes string
-}
-
 type PortMapping struct {
-	HostPort      int
-	ContainerPort int
+	HostPort      int32
+	ContainerPort int32
 	Protocol      string
+	HostIP        string
 }
 
 type IPRanges struct {

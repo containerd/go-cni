@@ -11,19 +11,18 @@ import (
 
 type libcni struct {
 	config
-	cniConfig *cnilibrary.CNIConfig
-	networks  map[string]*cnilibrary.NetworkConfigList
+	cniConfig    *cnilibrary.CNIConfig
+	networkCount int // minimum network plugin configurations needed to initialize cni
+	networks     map[string]*cnilibrary.NetworkConfigList
 }
 
 type CNI interface {
 	// PluginStatus returns whether the cni plugin is ready.
 	PluginStatus() error
-	// SetupNetworkContainer setups the network Container.
+	// Setup setups the networking for the container.
 	Setup(ID string, netNS string, opts ...ContainerOptions) ([]*current.Result, error)
-	// RemoveNetworkContainer removes the network Container.
+	// Remove tears down the network of the container.
 	Remove(ID string, netNS string, opts ...ContainerOptions) error
-	// ContainerStatus returns the network status of the Container
-	ContainerStatus() *Container
 }
 
 func defaultCNIConfig() *libcni {
@@ -48,13 +47,13 @@ func New(config ...ConfigOptions) CNI {
 }
 
 func (c *libcni) PluginStatus() error {
-	// TODO this logic changes when CNI Support
+	// TODO this logic changes when CNI Supports
 	// Dynamic network updates
-	if len(c.networks) == 0 {
+	if len(c.networks) < c.networkCount {
 		c.populateNetworkConfig()
 	}
 
-	if len(c.networks) == 0 {
+	if len(c.networks) < c.networkCount {
 		return fmt.Errorf("cni config not intialized")
 	}
 	return nil
@@ -113,9 +112,9 @@ func (c *libcni) populateNetworkConfig() error {
 }
 
 func (c *libcni) Setup(ID string, netNS string, opts ...ContainerOptions) ([]*current.Result, error) {
-	container, err := NewContainer(ID, netNS, opts...)
+	container, err := NewContainer(ID, netNS, c.defaultIfName, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Container for %s: %v", ID, err)
+		return nil, fmt.Errorf("failed to create container for %s: %v", ID, err)
 	}
 	r := container.constructRuntimeConf()
 	cninet := &cnilibrary.CNIConfig{
@@ -126,7 +125,7 @@ func (c *libcni) Setup(ID string, netNS string, opts ...ContainerOptions) ([]*cu
 	for _, n := range c.networks {
 		result, err := container.addNetworks(r, n, cninet)
 		if err != nil {
-			return nil, fmt.Errorf("failed to attach container %s to network %s", ID, n.Name)
+			return nil, fmt.Errorf("failed to attach container %s to network %s: %v", ID, n.Name, err)
 		}
 		results = append(results, result)
 	}
@@ -134,9 +133,9 @@ func (c *libcni) Setup(ID string, netNS string, opts ...ContainerOptions) ([]*cu
 }
 
 func (c *libcni) Remove(ID string, netNS string, opts ...ContainerOptions) error {
-	container, err := NewContainer(ID, netNS, opts...)
+	container, err := NewContainer(ID, netNS, c.defaultIfName, opts...)
 	if err != nil {
-		return fmt.Errorf("failed to remove Container for %s: %v", ID, err)
+		return fmt.Errorf("failed to remove container %s: %v", ID, err)
 	}
 	r := container.constructRuntimeConf()
 	cninet := &cnilibrary.CNIConfig{
@@ -146,12 +145,8 @@ func (c *libcni) Remove(ID string, netNS string, opts ...ContainerOptions) error
 	for _, n := range c.networks {
 		err := container.deleteNetworks(r, n, cninet)
 		if err != nil {
-			return fmt.Errorf("failed to detach container %s from network %s", ID, n.Name)
+			return fmt.Errorf("failed to detach container %s from network %s: %v", ID, n.Name, err)
 		}
 	}
-	return nil
-}
-
-func (c *libcni) ContainerStatus() *Container {
 	return nil
 }

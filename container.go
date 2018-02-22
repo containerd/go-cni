@@ -18,10 +18,12 @@ type Container struct {
 	IPs         []string
 }
 
-func NewContainer(ID string, netNS string, opts ...ContainerOptions) (*Container, error) {
-	c := new(Container)
-	c.ID = ID
-	c.NetNS = netNS
+func NewContainer(ID string, netNS string, ifName string, opts ...ContainerOptions) (*Container, error) {
+	c := &Container{
+		ID:     ID,
+		NetNS:  netNS,
+		IfName: ifName,
+	}
 	for _, o := range opts {
 		if err := o(c); err != nil {
 			return nil, err
@@ -31,10 +33,11 @@ func NewContainer(ID string, netNS string, opts ...ContainerOptions) (*Container
 }
 
 func (c *Container) constructRuntimeConf() *cnilibrary.RuntimeConf {
-	r := new(cnilibrary.RuntimeConf)
-	r.ContainerID = c.ID
-	r.NetNS = c.NetNS
-	r.IfName = c.IfName
+	r := &cnilibrary.RuntimeConf{
+		ContainerID: c.ID,
+		NetNS:       c.NetNS,
+		IfName:      c.IfName,
+	}
 	for k, v := range c.Labels {
 		r.Args = append(r.Args, [2]string{k, v})
 	}
@@ -55,15 +58,13 @@ func (c *Container) addNetworks(
 ) (*current.Result, error) {
 	res, err := cniConfig.AddNetworkList(n, r)
 	if err != nil {
-		fmt.Errorf("Error adding network: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed adding network: %v", err)
 	}
-	curRes, err := current.NewResultFromResult(res)
+	newRes, err := current.NewResultFromResult(res)
 	if err != nil {
-		fmt.Errorf("Error translating result: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed translating result: %v", err)
 	}
-	return curRes, nil
+	return newRes, nil
 }
 
 func (c *Container) deleteNetworks(
@@ -72,7 +73,7 @@ func (c *Container) deleteNetworks(
 	cniConfig *cnilibrary.CNIConfig,
 ) error {
 	if err := cniConfig.DelNetworkList(n, r); err != nil {
-		return fmt.Errorf("Error adding network: %v", err)
+		return fmt.Errorf("failed deleting network: %v", err)
 	}
 	return nil
 }

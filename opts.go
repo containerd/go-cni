@@ -41,6 +41,13 @@ func WithLoNetwork() ConfigOptions {
 	}
 }
 
+func WithMinNetworkCount(count int) ConfigOptions {
+	return func(c *libcni) error {
+		c.networkCount = count
+		return nil
+	}
+}
+
 //TODO: Should we support direct network configs?
 /*
 func WithConf(byte []bytes) ConfigOptions {
