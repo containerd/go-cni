@@ -1,0 +1,12 @@
+language: go
+go:
+  - 1.9.x
+  - tip
+
+go_import_path: github.com/abhi/libcni
+
+install:
+  - go get -d
+
+script:
+  - go test -race
