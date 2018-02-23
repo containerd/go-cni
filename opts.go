@@ -36,7 +36,10 @@ func WithLoNetwork() ConfigOptions {
   "type": "loopback"
 }]
 }`))
-		c.networks["cni-loopback"] = loConfig
+		c.networks = append(c.networks, &Network{
+			cni:    c.cniConfig,
+			config: loConfig,
+		})
 		return nil
 	}
 }
