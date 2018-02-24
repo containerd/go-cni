@@ -9,20 +9,21 @@ import (
 	"github.com/containernetworking/cni/pkg/types/current"
 )
 
-type libcni struct {
-	config
-	cniConfig    *cnilibrary.CNIConfig
-	networkCount int // minimum network plugin configurations needed to initialize cni
-	networks     map[string]*cnilibrary.NetworkConfigList
+type CNI interface {
+	// Status returns whether the cni plugin is ready.
+	Status() error
+	// Setup setups the networking for the container.
+	Setup(id string, path string, opts ...NamespaceOpts) ([]*current.Result, error)
+	// Remove tears down the network of the container.
+	Remove(id string, path string, opts ...NamespaceOpts) error
 }
 
-type CNI interface {
-	// PluginStatus returns whether the cni plugin is ready.
-	PluginStatus() error
-	// Setup setups the networking for the container.
-	Setup(ID string, netNS string, opts ...ContainerOptions) ([]*current.Result, error)
-	// Remove tears down the network of the container.
-	Remove(ID string, netNS string, opts ...ContainerOptions) error
+type libcni struct {
+	config
+
+	cniConfig    *cnilibrary.CNIConfig
+	networkCount int // minimum network plugin configurations needed to initialize cni
+	networks     []*Network
 }
 
 func defaultCNIConfig() *libcni {
@@ -38,7 +39,6 @@ func defaultCNIConfig() *libcni {
 func New(config ...ConfigOptions) CNI {
 	cni := defaultCNIConfig()
 	cni.cniConfig = &cnilibrary.CNIConfig{Path: cni.pluginDirs}
-	cni.networks = make(map[string]*cnilibrary.NetworkConfigList)
 	for _, c := range config {
 		c(cni)
 	}
@@ -46,7 +46,7 @@ func New(config ...ConfigOptions) CNI {
 	return cni
 }
 
-func (c *libcni) PluginStatus() error {
+func (c *libcni) Status() error {
 	// TODO this logic changes when CNI Supports
 	// Dynamic network updates
 	if len(c.networks) < c.networkCount {
@@ -102,50 +102,41 @@ func (c *libcni) populateNetworkConfig() error {
 			fmt.Errorf("CNI config list %s has no networks, skipping", confFile)
 			continue
 		}
-		c.networks[confList.Name] = confList
+		c.networks = append(c.networks, &Network{
+			cni:    c.cniConfig,
+			config: confList,
+		})
 	}
 	if len(c.networks) == 0 {
 		return fmt.Errorf("No valid networks found in %s", c.pluginDirs)
 	}
-
 	return nil
 }
 
-func (c *libcni) Setup(ID string, netNS string, opts ...ContainerOptions) ([]*current.Result, error) {
-	container, err := NewContainer(ID, netNS, c.defaultIfName, opts...)
+func (c *libcni) Setup(id string, path string, opts ...NamespaceOpts) ([]*current.Result, error) {
+	ns, err := newNamespace(id, path, c.defaultIfName, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create container for %s: %v", ID, err)
+		return nil, err
 	}
-	r := container.constructRuntimeConf()
-	cninet := &cnilibrary.CNIConfig{
-		Path: c.pluginDirs,
-	}
-	results := []*current.Result{}
-	//By default attach container to all networks
-	for _, n := range c.networks {
-		result, err := container.addNetworks(r, n, cninet)
+	var results []*current.Result
+	for _, network := range c.networks {
+		r, err := network.Attach(ns)
 		if err != nil {
-			return nil, fmt.Errorf("failed to attach container %s to network %s: %v", ID, n.Name, err)
+			return nil, err
 		}
-		results = append(results, result)
+		results = append(results, r)
 	}
 	return results, nil
 }
 
-func (c *libcni) Remove(ID string, netNS string, opts ...ContainerOptions) error {
-	container, err := NewContainer(ID, netNS, c.defaultIfName, opts...)
+func (c *libcni) Remove(id string, path string, opts ...NamespaceOpts) error {
+	ns, err := newNamespace(id, path, c.defaultIfName, opts...)
 	if err != nil {
-		return fmt.Errorf("failed to remove container %s: %v", ID, err)
+		return err
 	}
-	r := container.constructRuntimeConf()
-	cninet := &cnilibrary.CNIConfig{
-		Path: c.pluginDirs,
-	}
-	//By default detach container from all networks
-	for _, n := range c.networks {
-		err := container.deleteNetworks(r, n, cninet)
-		if err != nil {
-			return fmt.Errorf("failed to detach container %s from network %s: %v", ID, n.Name, err)
+	for _, network := range c.networks {
+		if err := network.Remove(ns); err != nil {
+			return err
 		}
 	}
 	return nil
