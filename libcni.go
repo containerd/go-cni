@@ -13,7 +13,7 @@ type CNI interface {
 	// Status returns whether the cni plugin is ready.
 	Status() error
 	// Setup setups the networking for the container.
-	Setup(id string, path string, opts ...NamespaceOpts) ([]*current.Result, error)
+	Setup(id string, path string, opts ...NamespaceOpts) (*CNIResult, error)
 	// Remove tears down the network of the container.
 	Remove(id string, path string, opts ...NamespaceOpts) error
 }
@@ -70,7 +70,6 @@ func (c *libcni) populateNetworkConfig() error {
 	// files contains the network config files associated with cni network.
 	// Use lexicographical way as a defined order for network config files.
 	sort.Strings(files)
-
 	for _, confFile := range files {
 		var confList *cnilibrary.NetworkConfigList
 		if strings.HasSuffix(confFile, ".conflist") {
@@ -113,7 +112,7 @@ func (c *libcni) populateNetworkConfig() error {
 	return nil
 }
 
-func (c *libcni) Setup(id string, path string, opts ...NamespaceOpts) ([]*current.Result, error) {
+func (c *libcni) Setup(id string, path string, opts ...NamespaceOpts) (*CNIResult, error) {
 	ns, err := newNamespace(id, path, c.defaultIfName, opts...)
 	if err != nil {
 		return nil, err
@@ -126,7 +125,7 @@ func (c *libcni) Setup(id string, path string, opts ...NamespaceOpts) ([]*curren
 		}
 		results = append(results, r)
 	}
-	return results, nil
+	return c.GetCNIResultFromResults(results)
 }
 
 func (c *libcni) Remove(id string, path string, opts ...NamespaceOpts) error {
