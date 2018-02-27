@@ -88,13 +88,3 @@ func (c *libcni) getInterfaceName(interfaces []*current.Interface,
 	}
 	return c.defaultIfName
 }
-
-func validateInterfaceConfig(ipConf *current.IPConfig, ifs int) error {
-	if ipConf == nil {
-		return fmt.Errorf("Invalid IP configuration")
-	}
-	if ipConf.Interface != nil && *ipConf.Interface > ifs {
-		return fmt.Errorf("Invalid IP configuration with invalid interface")
-	}
-	return nil
-}

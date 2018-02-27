@@ -39,6 +39,7 @@ func WithLoNetwork() ConfigOptions {
 		c.networks = append(c.networks, &Network{
 			cni:    c.cniConfig,
 			config: loConfig,
+			ifName: "lo",
 		})
 		return nil
 	}

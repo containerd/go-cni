@@ -8,10 +8,11 @@ import (
 type Network struct {
 	cni    *cnilibrary.CNIConfig
 	config *cnilibrary.NetworkConfigList
+	ifName string
 }
 
 func (n *Network) Attach(ns *Namespace) (*current.Result, error) {
-	r, err := n.cni.AddNetworkList(n.config, ns.config())
+	r, err := n.cni.AddNetworkList(n.config, ns.config(n.ifName))
 	if err != nil {
 		return nil, err
 	}
@@ -19,7 +20,7 @@ func (n *Network) Attach(ns *Namespace) (*current.Result, error) {
 }
 
 func (n *Network) Remove(ns *Namespace) error {
-	return n.cni.DelNetworkList(n.config, ns.config())
+	return n.cni.DelNetworkList(n.config, ns.config(n.ifName))
 }
 
 type Namespace struct {
@@ -28,16 +29,14 @@ type Namespace struct {
 
 	IPRanges    []IPRanges
 	PortMapping []PortMapping
-	IfName      string
 	Labels      map[string]string
 	IPs         []string
 }
 
-func newNamespace(id, path, ifName string, opts ...NamespaceOpts) (*Namespace, error) {
+func newNamespace(id, path string, opts ...NamespaceOpts) (*Namespace, error) {
 	ns := &Namespace{
-		ID:     id,
-		Path:   path,
-		IfName: ifName,
+		ID:   id,
+		Path: path,
 	}
 	for _, o := range opts {
 		if err := o(ns); err != nil {
@@ -47,11 +46,11 @@ func newNamespace(id, path, ifName string, opts ...NamespaceOpts) (*Namespace, e
 	return ns, nil
 }
 
-func (ns *Namespace) config() *cnilibrary.RuntimeConf {
+func (ns *Namespace) config(ifName string) *cnilibrary.RuntimeConf {
 	c := &cnilibrary.RuntimeConf{
 		ContainerID: ns.ID,
 		NetNS:       ns.Path,
-		IfName:      ns.IfName,
+		IfName:      ifName,
 	}
 	for k, v := range ns.Labels {
 		c.Args = append(c.Args, [2]string{k, v})
