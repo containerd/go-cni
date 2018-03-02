@@ -6,9 +6,11 @@ import (
 
 type ConfigOptions func(c *libcni) error
 
-func WithDefaultIfName(ifName string) ConfigOptions {
+// WithInterfacePrefix sets the prefix for network interfaces
+// e.g. eth or wlan
+func WithInterfacePrefix(prefix string) ConfigOptions {
 	return func(c *libcni) error {
-		c.defaultIfName = ifName
+		c.prefix = prefix
 		return nil
 	}
 }
@@ -39,6 +41,7 @@ func WithLoNetwork() ConfigOptions {
 		c.networks = append(c.networks, &Network{
 			cni:    c.cniConfig,
 			config: loConfig,
+			ifName: "lo",
 		})
 		return nil
 	}

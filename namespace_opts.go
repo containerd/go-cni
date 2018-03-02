@@ -2,14 +2,6 @@ package libcni
 
 type NamespaceOpts func(s *Namespace) error
 
-// Non default interface name
-func WithContainerIfName(ifname string) NamespaceOpts {
-	return func(c *Namespace) error {
-		c.IfName = ifname
-		return nil
-	}
-}
-
 // Capabilities
 func WithCapabilityPortMap(portMapping []PortMapping) NamespaceOpts {
 	return func(c *Namespace) error {

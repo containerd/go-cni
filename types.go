@@ -5,13 +5,13 @@ const (
 	DefaultNetDir        = "/etc/cni/net.d"
 	DefaultCNIDir        = "/opt/cni/bin"
 	VendorCNIDirTemplate = "%s/opt/%s/bin"
-	DefaultIfName        = "eth0"
+	DefaultPrefix        = "eth"
 )
 
 type config struct {
 	pluginDirs    []string
 	pluginConfDir string
-	defaultIfName string
+	prefix        string
 }
 
 type PortMapping struct {
