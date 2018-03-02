@@ -16,9 +16,10 @@ func validateInterfaceConfig(ipConf *current.IPConfig, ifs int) error {
 	return nil
 }
 
-func getIfName(ifName string, index int) string {
-	if index > 0 {
-		return fmt.Sprintf("%s%d", ifName, index)
-	}
-	return ifName
+func getIfName(prefix string, i int) string {
+	return fmt.Sprintf("%s%d", prefix, i)
+}
+
+func defaultInterface(prefix string) string {
+	return getIfName(prefix, 0)
 }

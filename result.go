@@ -25,21 +25,18 @@ type Config struct {
 	Sandbox   string
 }
 
-/* GetCNIResultFromResults returns a structured data containing the
-interface configuration for each of the interfaces created in the namespace.
-Conforms with
-Result:
-a) Interfaces list. Depending on the plugin, this can include the sandbox
-(eg, container or hypervisor) interface name and/or the host interface
-name, the hardware addresses of each interface, and details about the
-sandbox (if any) the interface is in.
-b) IP configuration assigned to each  interface. The IPv4 and/or IPv6 addresses,
-gateways, and routes assigned to sandbox and/or host interfaces.
-c) DNS information. Dictionary that includes DNS information for nameservers,
-domain, search domains and options.
-/*
-
-*/
+// GetCNIResultFromResults returns a structured data containing the
+// interface configuration for each of the interfaces created in the namespace.
+// Conforms with
+// Result:
+// a) Interfaces list. Depending on the plugin, this can include the sandbox
+// (eg, container or hypervisor) interface name and/or the host interface
+// name, the hardware addresses of each interface, and details about the
+// sandbox (if any) the interface is in.
+// b) IP configuration assigned to each  interface. The IPv4 and/or IPv6 addresses,
+// gateways, and routes assigned to sandbox and/or host interfaces.
+// c) DNS information. Dictionary that includes DNS information for nameservers,
+// domain, search domains and options.
 func (c *libcni) GetCNIResultFromResults(results []*current.Result) (*CNIResult, error) {
 	r := &CNIResult{
 		Interfaces: make(map[string]*Config),
@@ -48,7 +45,7 @@ func (c *libcni) GetCNIResultFromResults(results []*current.Result) (*CNIResult,
 	// Plugins may not need to return Interfaces in result if
 	// if there are no multiple interfaces created. In that case
 	// all configs should be applied against default interface
-	r.Interfaces[c.defaultIfName] = &Config{}
+	r.Interfaces[defaultInterface(c.prefix)] = &Config{}
 
 	// Walk through all the results
 	for _, result := range results {
@@ -72,7 +69,7 @@ func (c *libcni) GetCNIResultFromResults(results []*current.Result) (*CNIResult,
 		r.DNS = append(r.DNS, result.DNS)
 		r.Routes = append(r.Routes, result.Routes...)
 	}
-	if _, ok := r.Interfaces[c.defaultIfName]; !ok {
+	if _, ok := r.Interfaces[defaultInterface(c.prefix)]; !ok {
 		return nil, fmt.Errorf("namespace not intialized with defualt network")
 	}
 	return r, nil
@@ -86,5 +83,5 @@ func (c *libcni) getInterfaceName(interfaces []*current.Interface,
 	if ipConf.Interface != nil {
 		return interfaces[*ipConf.Interface].Name
 	}
-	return c.defaultIfName
+	return defaultInterface(c.prefix)
 }

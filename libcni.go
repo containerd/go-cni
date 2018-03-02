@@ -31,7 +31,7 @@ func defaultCNIConfig() *libcni {
 		config: config{
 			pluginDirs:    []string{DefaultCNIDir},
 			pluginConfDir: DefaultNetDir,
-			defaultIfName: DefaultIfName,
+			prefix:        DefaultPrefix,
 		},
 	}
 }
@@ -76,9 +76,7 @@ func (c *libcni) populateNetworkConfig() error {
 	// list of network conf files as the default network and choose the default
 	// interface provided during init as the network interface for this default
 	// network. For every other network use a generated interface id.
-	ifName := c.defaultIfName
-	ifIndex := 0
-
+	i := 0
 	for _, confFile := range files {
 		var confList *cnilibrary.NetworkConfigList
 		if strings.HasSuffix(confFile, ".conflist") {
@@ -113,9 +111,9 @@ func (c *libcni) populateNetworkConfig() error {
 		c.networks = append(c.networks, &Network{
 			cni:    c.cniConfig,
 			config: confList,
-			ifName: getIfName(ifName, ifIndex),
+			ifName: getIfName(c.prefix, i),
 		})
-		ifIndex++
+		i++
 	}
 	if len(c.networks) == 0 {
 		return fmt.Errorf("No valid networks found in %s", c.pluginDirs)
