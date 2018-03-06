@@ -24,19 +24,18 @@ func (n *Network) Remove(ns *Namespace) error {
 }
 
 type Namespace struct {
-	ID   string
-	Path string
-
-	IPRanges    []IPRanges
-	PortMapping []PortMapping
-	Labels      map[string]string
-	IPs         []string
+	id             string
+	path           string
+	capabilityArgs map[string]interface{}
+	args           map[string]string
 }
 
 func newNamespace(id, path string, opts ...NamespaceOpts) (*Namespace, error) {
 	ns := &Namespace{
-		ID:   id,
-		Path: path,
+		id:             id,
+		path:           path,
+		capabilityArgs: make(map[string]interface{}),
+		args:           make(map[string]string),
 	}
 	for _, o := range opts {
 		if err := o(ns); err != nil {
@@ -48,19 +47,13 @@ func newNamespace(id, path string, opts ...NamespaceOpts) (*Namespace, error) {
 
 func (ns *Namespace) config(ifName string) *cnilibrary.RuntimeConf {
 	c := &cnilibrary.RuntimeConf{
-		ContainerID: ns.ID,
-		NetNS:       ns.Path,
+		ContainerID: ns.id,
+		NetNS:       ns.path,
 		IfName:      ifName,
 	}
-	for k, v := range ns.Labels {
+	for k, v := range ns.args {
 		c.Args = append(c.Args, [2]string{k, v})
 	}
-	c.CapabilityArgs = make(map[string]interface{})
-	if len(ns.IPRanges) > 0 {
-		c.CapabilityArgs["ipRanges"] = ns.IPRanges
-	}
-	if len(ns.PortMapping) > 0 {
-		c.CapabilityArgs["portMappings"] = ns.PortMapping
-	}
+	c.CapabilityArgs = ns.capabilityArgs
 	return c
 }
