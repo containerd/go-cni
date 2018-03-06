@@ -58,7 +58,7 @@ func WithMinNetworkCount(count int) ConfigOptions {
 /*
 func WithConf(byte []bytes) ConfigOptions {
 	return func(c *config) error {
-
+			c.networks=
 	}
 }
 
