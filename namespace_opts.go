@@ -5,18 +5,21 @@ type NamespaceOpts func(s *Namespace) error
 // Capabilities
 func WithCapabilityPortMap(portMapping []PortMapping) NamespaceOpts {
 	return func(c *Namespace) error {
-		for _, pmap := range portMapping {
-			c.PortMapping = append(c.PortMapping, pmap)
-		}
+		c.capabilityArgs["portMappings"] = portMapping
 		return nil
 	}
 }
 
 func WithCapabilityIPRanges(ipRanges []IPRanges) NamespaceOpts {
 	return func(c *Namespace) error {
-		for _, ipr := range ipRanges {
-			c.IPRanges = append(c.IPRanges, ipr)
-		}
+		c.capabilityArgs["ipRanges"] = ipRanges
+		return nil
+	}
+}
+
+func WithCapability(name string, capability interface{}) NamespaceOpts {
+	return func(c *Namespace) error {
+		c.capabilityArgs[name] = capability
 		return nil
 	}
 }
@@ -24,17 +27,16 @@ func WithCapabilityIPRanges(ipRanges []IPRanges) NamespaceOpts {
 // Args
 func WithLabels(labels map[string]string) NamespaceOpts {
 	return func(c *Namespace) error {
-		c.Labels = make(map[string]string)
 		for k, v := range labels {
-			c.Labels[k] = v
+			c.args[k] = v
 		}
 		return nil
 	}
 }
 
-func WithIPs(ips []string) NamespaceOpts {
+func WithArgs(k, v string) NamespaceOpts {
 	return func(c *Namespace) error {
-		c.IPs = append(c.IPs, ips...)
+		c.args[k] = v
 		return nil
 	}
 }
