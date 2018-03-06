@@ -50,11 +50,10 @@ func (c *libcni) Status() error {
 	// TODO this logic changes when CNI Supports
 	// Dynamic network updates
 	if len(c.networks) < c.networkCount {
-		c.populateNetworkConfig()
-	}
-
-	if len(c.networks) < c.networkCount {
-		return fmt.Errorf("cni config not intialized")
+		err := c.populateNetworkConfig()
+		if err != nil {
+			return fmt.Errorf("cni config not intialized: %v", err)
+		}
 	}
 	return nil
 }
