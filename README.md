@@ -13,7 +13,7 @@ libcni aims to support plugins that implement [Container Network Interface](http
 func main() {
 	id := "123456"
 	netns := "/proc/9999/ns/net"
-	defaultIfName := "ens32"
+	defaultIfName := "eth0"
 	// Initialize library
 	l = libcni.New(libcni.WithMinNetworkCount(2),
 		libcni.WithLoNetwork(),
