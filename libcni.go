@@ -12,16 +12,16 @@ import (
 type CNI interface {
 	// Status returns whether the cni plugin is ready.
 	Status() error
-	// Setup setups the networking for the container.
+	// Setup setups the networking for the namespace.
 	Setup(id string, path string, opts ...NamespaceOpts) (*CNIResult, error)
-	// Remove tears down the network of the container.
+	// Remove tears down the network of the namespace.
 	Remove(id string, path string, opts ...NamespaceOpts) error
 }
 
 type libcni struct {
 	config
 
-	cniConfig    *cnilibrary.CNIConfig
+	cniConfig    cnilibrary.CNI
 	networkCount int // minimum network plugin configurations needed to initialize cni
 	networks     []*Network
 }
@@ -38,7 +38,6 @@ func defaultCNIConfig() *libcni {
 
 func New(config ...ConfigOptions) CNI {
 	cni := defaultCNIConfig()
-	cni.cniConfig = &cnilibrary.CNIConfig{Path: cni.pluginDirs}
 	for _, c := range config {
 		c(cni)
 	}

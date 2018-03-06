@@ -6,7 +6,7 @@ import (
 )
 
 type Network struct {
-	cni    *cnilibrary.CNIConfig
+	cni    cnilibrary.CNI
 	config *cnilibrary.NetworkConfigList
 	ifName string
 }
