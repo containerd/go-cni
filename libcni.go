@@ -1,12 +1,12 @@
 package libcni
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 
 	cnilibrary "github.com/containernetworking/cni/libcni"
 	"github.com/containernetworking/cni/pkg/types/current"
+	"github.com/pkg/errors"
 )
 
 type CNI interface {
@@ -45,15 +45,19 @@ func New(config ...ConfigOptions) CNI {
 	return cni
 }
 
+// Status checks the status of cni initialization
 func (c *libcni) Status() error {
 	// TODO this logic changes when CNI Supports
 	// Dynamic network updates
 	if len(c.networks) < c.networkCount {
-		c.populateNetworkConfig()
+		err := c.populateNetworkConfig()
+		if err != nil {
+			return err
+		}
 	}
 
 	if len(c.networks) < c.networkCount {
-		return fmt.Errorf("cni config not intialized")
+		return ErrCNINotInitialized
 	}
 	return nil
 }
@@ -62,9 +66,9 @@ func (c *libcni) populateNetworkConfig() error {
 	files, err := cnilibrary.ConfFiles(c.pluginConfDir, []string{".conf", ".conflist", ".json"})
 	switch {
 	case err != nil:
-		return err
+		return errors.Wrapf(ErrRead, "failed to read config file: %v", err)
 	case len(files) == 0:
-		return fmt.Errorf("No network config found in %s", c.pluginConfDir)
+		return errors.Wrapf(ErrCNINotInitialized, "no network config found in %s", c.pluginConfDir)
 	}
 
 	// files contains the network config files associated with cni network.
@@ -81,31 +85,27 @@ func (c *libcni) populateNetworkConfig() error {
 		if strings.HasSuffix(confFile, ".conflist") {
 			confList, err = cnilibrary.ConfListFromFile(confFile)
 			if err != nil {
-				fmt.Errorf("Error loading CNI config list file %s: %v", confFile, err)
-				continue
+				return errors.Wrapf(ErrInvalidConfig, "failed to load CNI config list file %s: %v", confFile, err)
 			}
 		} else {
 			conf, err := cnilibrary.ConfFromFile(confFile)
 			if err != nil {
-				fmt.Errorf("Error loading CNI config file %s: %v", confFile, err)
-				continue
+				return errors.Wrapf(ErrInvalidConfig, "failed to load CNI config file %s: %v", confFile, err)
 			}
 			// Ensure the config has a "type" so we know what plugin to run.
 			// Also catches the case where somebody put a conflist into a conf file.
 			if conf.Network.Type == "" {
-				fmt.Errorf("Error loading CNI config file %s: no 'type'; perhaps this is a .conflist?", confFile)
-				continue
+				return errors.Wrapf(ErrInvalidConfig, "network type not found in %s", confFile)
 			}
 
 			confList, err = cnilibrary.ConfListFromConf(conf)
 			if err != nil {
-				fmt.Errorf("Error converting CNI config file %s to list: %v", confFile, err)
-				continue
+				return errors.Wrapf(ErrInvalidConfig, "failed to convert CNI config file %s to list: %v", confFile, err)
 			}
 		}
 		if len(confList.Plugins) == 0 {
-			fmt.Errorf("CNI config list %s has no networks, skipping", confFile)
-			continue
+			return errors.Wrapf(ErrInvalidConfig, "CNI config list %s has no networks, skipping", confFile)
+
 		}
 		c.networks = append(c.networks, &Network{
 			cni:    c.cniConfig,
@@ -115,11 +115,12 @@ func (c *libcni) populateNetworkConfig() error {
 		i++
 	}
 	if len(c.networks) == 0 {
-		return fmt.Errorf("No valid networks found in %s", c.pluginDirs)
+		return errors.Wrapf(ErrCNINotInitialized, "no valid networks found in %s", c.pluginDirs)
 	}
 	return nil
 }
 
+// Setup setups the network in the namespace
 func (c *libcni) Setup(id string, path string, opts ...NamespaceOpts) (*CNIResult, error) {
 	ns, err := newNamespace(id, path, opts...)
 	if err != nil {
@@ -136,6 +137,7 @@ func (c *libcni) Setup(id string, path string, opts ...NamespaceOpts) (*CNIResul
 	return c.GetCNIResultFromResults(results)
 }
 
+// Remove removes the network config from the namespace
 func (c *libcni) Remove(id string, path string, opts ...NamespaceOpts) error {
 	ns, err := newNamespace(id, path, opts...)
 	if err != nil {

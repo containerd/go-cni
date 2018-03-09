@@ -1,11 +1,11 @@
 package libcni
 
 import (
-	"fmt"
 	"net"
 
 	"github.com/containernetworking/cni/pkg/types"
 	"github.com/containernetworking/cni/pkg/types/current"
+	"github.com/pkg/errors"
 )
 
 type IPConfig struct {
@@ -60,7 +60,7 @@ func (c *libcni) GetCNIResultFromResults(results []*current.Result) (*CNIResult,
 		// interfaces
 		for _, ipConf := range result.IPs {
 			if err := validateInterfaceConfig(ipConf, len(result.Interfaces)); err != nil {
-				return nil, err
+				return nil, errors.Wrapf(ErrInvalidResult, "failed to valid interface config: %v", err)
 			}
 			name := c.getInterfaceName(result.Interfaces, ipConf)
 			r.Interfaces[name].IPConfigs = append(r.Interfaces[name].IPConfigs,
@@ -70,7 +70,7 @@ func (c *libcni) GetCNIResultFromResults(results []*current.Result) (*CNIResult,
 		r.Routes = append(r.Routes, result.Routes...)
 	}
 	if _, ok := r.Interfaces[defaultInterface(c.prefix)]; !ok {
-		return nil, fmt.Errorf("namespace not intialized with defualt network")
+		return nil, errors.Wrapf(ErrNotFound, "default network not found")
 	}
 	return r, nil
 }
