@@ -8,10 +8,10 @@ import (
 
 func validateInterfaceConfig(ipConf *current.IPConfig, ifs int) error {
 	if ipConf == nil {
-		return fmt.Errorf("Invalid IP configuration")
+		return fmt.Errorf("invalid IP configuration")
 	}
 	if ipConf.Interface != nil && *ipConf.Interface > ifs {
-		return fmt.Errorf("Invalid IP configuration with invalid interface")
+		return fmt.Errorf("invalid IP configuration with invalid interface %d", *ipConf.Interface)
 	}
 	return nil
 }
