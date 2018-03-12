@@ -12,8 +12,8 @@ var (
 	ErrInvalidResult     = errors.New("invalid result")
 )
 
-// IsCNINoteInitialized returns true if the error is due cni config not being intialized
-func IsCNINoteInitialized(err error) bool {
+// IsCNINotInitialized returns true if the error is due cni config not being intialized
+func IsCNINotInitialized(err error) bool {
 	return errors.Cause(err) == ErrCNINotInitialized
 }
 
