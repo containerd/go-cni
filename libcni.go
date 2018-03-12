@@ -36,13 +36,15 @@ func defaultCNIConfig() *libcni {
 	}
 }
 
-func New(config ...ConfigOptions) CNI {
+func New(config ...ConfigOptions) (CNI, error) {
 	cni := defaultCNIConfig()
 	for _, c := range config {
 		c(cni)
 	}
-	cni.populateNetworkConfig()
-	return cni
+	if err := cni.populateNetworkConfig(); err != nil {
+		return nil, err
+	}
+	return cni, nil
 }
 
 // Status checks the status of cni initialization
@@ -50,8 +52,7 @@ func (c *libcni) Status() error {
 	// TODO this logic changes when CNI Supports
 	// Dynamic network updates
 	if len(c.networks) < c.networkCount {
-		err := c.populateNetworkConfig()
-		if err != nil {
+		if err := c.populateNetworkConfig(); err != nil {
 			return err
 		}
 	}
