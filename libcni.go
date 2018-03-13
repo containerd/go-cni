@@ -26,9 +26,6 @@ import (
 )
 
 type CNI interface {
-	// Status returns whether the cni plugin is ready.
-	Status() error
-	// Setup setups the networking for the namespace.
 	Setup(id string, path string, opts ...NamespaceOpts) (*CNIResult, error)
 	// Remove tears down the network of the namespace.
 	Remove(id string, path string, opts ...NamespaceOpts) error
@@ -49,6 +46,10 @@ func defaultCNIConfig() *libcni {
 			pluginConfDir: DefaultNetDir,
 			prefix:        DefaultPrefix,
 		},
+		cniConfig: &cnilibrary.CNIConfig{
+			Path: []string{DefaultCNIDir},
+		},
+		networkCount: 1,
 	}
 }
 
@@ -61,22 +62,6 @@ func New(config ...ConfigOptions) (CNI, error) {
 		return nil, err
 	}
 	return cni, nil
-}
-
-// Status checks the status of cni initialization
-func (c *libcni) Status() error {
-	// TODO this logic changes when CNI Supports
-	// Dynamic network updates
-	if len(c.networks) < c.networkCount {
-		if err := c.populateNetworkConfig(); err != nil {
-			return err
-		}
-	}
-
-	if len(c.networks) < c.networkCount {
-		return ErrCNINotInitialized
-	}
-	return nil
 }
 
 func (c *libcni) populateNetworkConfig() error {

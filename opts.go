@@ -33,7 +33,8 @@ func WithInterfacePrefix(prefix string) ConfigOptions {
 
 func WithPluginDir(dirs []string) ConfigOptions {
 	return func(c *libcni) error {
-		c.pluginDirs = append(c.pluginDirs, dirs...)
+		c.pluginDirs = dirs
+		c.cniConfig = &cnilibrary.CNIConfig{Path: dirs}
 		return nil
 	}
 }
