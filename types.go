@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package libcni
+package cni
 
 const (
 	CNIPluginName        = "cni"

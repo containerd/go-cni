@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package libcni
+package cni
 
 import (
 	"net"
@@ -40,8 +40,7 @@ func TestLibCNIType020(t *testing.T) {
 	l.pluginConfDir = confDir
 	// Set the minimum network count as 2 for this test
 	l.networkCount = 2
-
-	err := l.Status()
+	err := l.populateNetworkConfig()
 	assert.NoError(t, err)
 
 	mockCNI := &MockCNI{}
@@ -98,8 +97,7 @@ func TestLibCNITypeCurrent(t *testing.T) {
 	l.pluginConfDir = confDir
 	// Set the minimum network count as 2 for this test
 	l.networkCount = 2
-
-	err := l.Status()
+	err := l.populateNetworkConfig()
 	assert.NoError(t, err)
 
 	mockCNI := &MockCNI{}

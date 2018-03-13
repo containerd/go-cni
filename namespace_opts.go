@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package libcni
+package cni
 
 type NamespaceOpts func(s *Namespace) error
 
