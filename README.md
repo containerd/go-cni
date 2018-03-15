@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/containerd/go-cni.svg?branch=master)](https://travis-ci.org/containerd/go-cni)
+
 # go-cni
 
 A generic CNI library to provide APIs for CNI plugin interactions. The library provides APIs to:
