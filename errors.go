@@ -10,6 +10,7 @@ var (
 	ErrNotFound          = errors.New("not found")
 	ErrRead              = errors.New("failed to read config file")
 	ErrInvalidResult     = errors.New("invalid result")
+	ErrLoad              = errors.New("failed to load cni config")
 )
 
 // IsCNINotInitialized returns true if the error is due cni config not being intialized

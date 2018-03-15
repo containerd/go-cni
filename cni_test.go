@@ -40,7 +40,10 @@ func TestLibCNIType020(t *testing.T) {
 	l.pluginConfDir = confDir
 	// Set the minimum network count as 2 for this test
 	l.networkCount = 2
-	err := l.populateNetworkConfig()
+	err := l.Load(WithDefaultConf())
+	assert.NoError(t, err)
+
+	err = l.Status()
 	assert.NoError(t, err)
 
 	mockCNI := &MockCNI{}
@@ -97,7 +100,10 @@ func TestLibCNITypeCurrent(t *testing.T) {
 	l.pluginConfDir = confDir
 	// Set the minimum network count as 2 for this test
 	l.networkCount = 2
-	err := l.populateNetworkConfig()
+	err := l.Load(WithDefaultConf())
+	assert.NoError(t, err)
+
+	err = l.Status()
 	assert.NoError(t, err)
 
 	mockCNI := &MockCNI{}
