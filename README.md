@@ -1,4 +1,4 @@
-# libcni
+# go-cni
 
 A generic CNI library to provide APIs for CNI plugin interactions. The library provides APIs to:
 
@@ -6,7 +6,7 @@ A generic CNI library to provide APIs for CNI plugin interactions. The library p
 - Remove networks from container namespace
 - Query status of CNI network plugin initialization
 
-libcni aims to support plugins that implement [Container Network Interface](https://github.com/containernetworking/cni)
+go-cni aims to support plugins that implement [Container Network Interface](https://github.com/containernetworking/cni)
 
 ## Usage
 ```
@@ -15,11 +15,11 @@ func main() {
 	netns := "/proc/9999/ns/net"
 	defaultIfName := "eth0"
 	// Initialize library
-	l = libcni.New(libcni.WithMinNetworkCount(2),
-		libcni.WithLoNetwork(),
-		libcni.WithPluginConfDir("/etc/mycni/net.d"),
-		libcni.WithPluginDir([]string{"/opt/mycni/bin", "/opt/cni/bin"}),
-		libcni.WithDefaultIfName(defaultIfName))
+	l = gocni.New(gocni.WithMinNetworkCount(2),
+		gocni.WithLoNetwork(),
+		gocni.WithPluginConfDir("/etc/mycni/net.d"),
+		gocni.WithPluginDir([]string{"/opt/mycni/bin", "/opt/cni/bin"}),
+		gocni.WithDefaultIfName(defaultIfName))
 
 	// Setup network for namespace.
 	labels := map[string]string{
@@ -27,14 +27,14 @@ func main() {
 		"K8S_POD_NAME":               "pod1",
 		"K8S_POD_INFRA_CONTAINER_ID": id,
 	}
-	result, err := l.Setup(id, netns, libcni.WithLabels(labels))
+	result, err := l.Setup(id, netns, gocni.WithLabels(labels))
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup network for namespace %q: %v", id, err)
 	}
 	defer func() {
 		if retErr != nil {
 			// Teardown network if an error is returned.
-			if err := l.Remove(id, netns, libcni.WithLabels(labels)); err != nil {
+			if err := l.Remove(id, netns, gocni.WithLabels(labels)); err != nil {
 				fmt.Errorf("Failed to destroy network for namespace %q", id)
 			}
 		}
