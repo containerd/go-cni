@@ -24,7 +24,7 @@ func main() {
 		gocni.WithDefaultIfName(defaultIfName))
 	
 	// Load the cni configuration
-	err:= l.Load(gocni.WithLoNetwork(),gocni.WithDefaultConf())
+	err:= l.Load(gocni.WithLoNetwork,gocni.WithDefaultConf)
         if err != nil{
 		log.Errorf("failed to load cni configuration: %v", err)
 		return 
