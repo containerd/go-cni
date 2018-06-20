@@ -72,6 +72,8 @@ func New(config ...CNIOpt) (CNI, error) {
 
 func (c *libcni) Load(opts ...CNIOpt) error {
 	var err error
+	c.Lock()
+	defer c.Unlock()
 	// Reset the networks on a load operation to ensure
 	// config happens on a clean slate
 	c.reset()
@@ -81,21 +83,20 @@ func (c *libcni) Load(opts ...CNIOpt) error {
 			return errors.Wrapf(ErrLoad, fmt.Sprintf("cni config load failed: %v", err))
 		}
 	}
-	return c.Status()
+	return nil
 }
 
 func (c *libcni) Status() error {
 	c.RLock()
 	defer c.RUnlock()
-	if len(c.networks) < c.networkCount {
-		return ErrCNINotInitialized
-	}
-	return nil
+	return c.status()
 }
 
 // Setup setups the network in the namespace
 func (c *libcni) Setup(id string, path string, opts ...NamespaceOpts) (*CNIResult, error) {
-	if err := c.Status(); err != nil {
+	c.RLock()
+	defer c.RUnlock()
+	if err := c.status(); err != nil {
 		return nil, err
 	}
 	ns, err := newNamespace(id, path, opts...)
@@ -103,8 +104,6 @@ func (c *libcni) Setup(id string, path string, opts ...NamespaceOpts) (*CNIResul
 		return nil, err
 	}
 	var results []*current.Result
-	c.RLock()
-	defer c.RUnlock()
 	for _, network := range c.networks {
 		r, err := network.Attach(ns)
 		if err != nil {
@@ -117,15 +116,15 @@ func (c *libcni) Setup(id string, path string, opts ...NamespaceOpts) (*CNIResul
 
 // Remove removes the network config from the namespace
 func (c *libcni) Remove(id string, path string, opts ...NamespaceOpts) error {
-	if err := c.Status(); err != nil {
+	c.RLock()
+	defer c.RUnlock()
+	if err := c.status(); err != nil {
 		return err
 	}
 	ns, err := newNamespace(id, path, opts...)
 	if err != nil {
 		return err
 	}
-	c.RLock()
-	defer c.RUnlock()
 	for _, network := range c.networks {
 		if err := network.Remove(ns); err != nil {
 			return err
@@ -135,7 +134,12 @@ func (c *libcni) Remove(id string, path string, opts ...NamespaceOpts) error {
 }
 
 func (c *libcni) reset() {
-	c.Lock()
-	defer c.Unlock()
 	c.networks = nil
+}
+
+func (c *libcni) status() error {
+	if len(c.networks) < c.networkCount {
+		return ErrCNINotInitialized
+	}
+	return nil
 }
