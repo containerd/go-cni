@@ -75,8 +75,6 @@ func WithLoNetwork(c *libcni) error {
 }]
 }`))
 
-	c.Lock()
-	defer c.Unlock()
 	c.networks = append(c.networks, &Network{
 		cni:    c.cniConfig,
 		config: loConfig,
@@ -97,8 +95,6 @@ func WithConf(bytes []byte) CNIOpt {
 		if err != nil {
 			return err
 		}
-		c.Lock()
-		defer c.Unlock()
 		c.networks = append(c.networks, &Network{
 			cni:    c.cniConfig,
 			config: confList,
@@ -122,8 +118,6 @@ func WithConfFile(fileName string) CNIOpt {
 		if err != nil {
 			return err
 		}
-		c.Lock()
-		defer c.Unlock()
 		c.networks = append(c.networks, &Network{
 			cni:    c.cniConfig,
 			config: confList,
@@ -142,8 +136,6 @@ func WithConfListFile(fileName string) CNIOpt {
 		if err != nil {
 			return err
 		}
-		c.Lock()
-		defer c.Unlock()
 		c.networks = append(c.networks, &Network{
 			cni:    c.cniConfig,
 			config: confList,
@@ -174,8 +166,6 @@ func WithDefaultConf(c *libcni) error {
 	// interface provided during init as the network interface for this default
 	// network. For every other network use a generated interface id.
 	i := 0
-	c.Lock()
-	defer c.Unlock()
 	for _, confFile := range files {
 		var confList *cnilibrary.NetworkConfigList
 		if strings.HasSuffix(confFile, ".conflist") {
