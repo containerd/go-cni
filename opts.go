@@ -28,10 +28,10 @@ import (
 type CNIOpt func(c *libcni) error
 
 func checkVersion(conf *cnilibrary.NetworkConfig) bool {
-	if (conf.Network.CNIVersion == "") {
-		return true
-	}
 	for _, version := range cnitypes.SupportedVersions {
+		if (conf.Network.CNIVersion == "") {
+			conf.Network.CNIVersion = version
+		}
 		if (version == conf.Network.CNIVersion) {
 			return true
 		}
