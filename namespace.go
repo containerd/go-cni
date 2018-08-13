@@ -27,12 +27,27 @@ type Network struct {
 	ifName string
 }
 
+func (n *Network) isLoopback() bool {
+        for _, cfg := range n.config.Plugins {
+                if (cfg.Network.Type == "loopback") {
+                        return true
+                }
+        }
+        return false
+}
+
 func (n *Network) Attach(ns *Namespace) (*current.Result, error) {
 	r, err := n.cni.AddNetworkList(n.config, ns.config(n.ifName))
 	if err != nil {
 		return nil, err
 	}
-	return current.NewResultFromResult(r)
+	if (n.isLoopback()) {
+			return &current.Result{
+					CNIVersion: n.config.CNIVersion,
+			}, nil
+	} else {
+			return current.NewResultFromResult(r)
+	}
 }
 
 func (n *Network) Remove(ns *Namespace) error {
