@@ -18,6 +18,7 @@ package cni
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	cnilibrary "github.com/containernetworking/cni/libcni"
@@ -126,7 +127,7 @@ func (c *libcni) Remove(id string, path string, opts ...NamespaceOpts) error {
 		return err
 	}
 	for _, network := range c.networks {
-		if err := network.Remove(ns); err != nil {
+		if err := network.Remove(ns); err != nil && !strings.Contains(err.Error(), "no such file or directory") {
 			return err
 		}
 	}
