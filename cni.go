@@ -127,7 +127,16 @@ func (c *libcni) Remove(id string, path string, opts ...NamespaceOpts) error {
 		return err
 	}
 	for _, network := range c.networks {
-		if err := network.Remove(ns); err != nil && !strings.Contains(err.Error(), "no such file or directory") {
+		if err := network.Remove(ns); err != nil {
+			// Based on CNI spec v0.7.0, empty network namespace is allowed to
+			// do best effort cleanup. However, it is not handled consistently
+			// right now:
+			// https://github.com/containernetworking/plugins/issues/210
+			// TODO(random-liu): Remove the error handling when the issue is
+			// fixed and the CNI spec v0.6.0 support is deprecated.
+			if path == "" && strings.Contains(err.Error(), "no such file or directory") {
+				continue
+			}
 			return err
 		}
 	}
