@@ -87,6 +87,18 @@ func TestLibCNIType020(t *testing.T) {
 	assert.Equal(t, r.Interfaces["eth0"].IPConfigs[1].IP.String(), "10.0.0.2")
 	err = l.Remove("container-id1", "/proc/12345/ns/net")
 	assert.NoError(t, err)
+
+	c := l.GetConfig()
+	assert.NotNil(t, c)
+	assert.NotNil(t, c.Prefix)
+	assert.Equal(t, "eth", c.Prefix)
+	assert.NotNil(t, c.PluginDirs)
+	assert.Equal(t, DefaultCNIDir, c.PluginDirs[0])
+	assert.NotNil(t, c.PluginConfDir)
+	assert.Equal(t, confDir, c.PluginConfDir)
+	assert.NotNil(t, c.Networks)
+	assert.Equal(t, "plugin1", c.Networks[0].Config.Name)
+	assert.Equal(t, "eth0", c.Networks[0].IFName)
 }
 
 // TestLibCNITypeCurrent tests the cni version 3.x plugin
