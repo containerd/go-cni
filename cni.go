@@ -81,6 +81,7 @@ func defaultCNIConfig() *libcni {
 			pluginDirs:    []string{DefaultCNIDir},
 			pluginConfDir: DefaultNetDir,
 			prefix:        DefaultPrefix,
+			noSuffix:      false,
 		},
 		cniConfig: &cnilibrary.CNIConfig{
 			Path: []string{DefaultCNIDir},

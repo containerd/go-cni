@@ -61,7 +61,13 @@ func (c *libcni) GetCNIResultFromResults(results []*current.Result) (*CNIResult,
 	// Plugins may not need to return Interfaces in result if
 	// if there are no multiple interfaces created. In that case
 	// all configs should be applied against default interface
-	r.Interfaces[defaultInterface(c.prefix)] = &Config{}
+	defaultIfName := func() string {
+		if c.noSuffix {
+			return c.prefix
+		}
+		return defaultInterface(c.prefix)
+	}
+	r.Interfaces[defaultIfName()] = &Config{}
 
 	// Walk through all the results
 	for _, result := range results {
@@ -85,7 +91,7 @@ func (c *libcni) GetCNIResultFromResults(results []*current.Result) (*CNIResult,
 		r.DNS = append(r.DNS, result.DNS)
 		r.Routes = append(r.Routes, result.Routes...)
 	}
-	if _, ok := r.Interfaces[defaultInterface(c.prefix)]; !ok {
+	if _, ok := r.Interfaces[defaultIfName()]; !ok {
 		return nil, errors.Wrapf(ErrNotFound, "default network not found")
 	}
 	return r, nil
@@ -98,6 +104,9 @@ func (c *libcni) getInterfaceName(interfaces []*current.Interface,
 	ipConf *current.IPConfig) string {
 	if ipConf.Interface != nil {
 		return interfaces[*ipConf.Interface].Name
+	}
+	if c.noSuffix {
+		return c.prefix
 	}
 	return defaultInterface(c.prefix)
 }

@@ -28,6 +28,7 @@ type config struct {
 	pluginDirs    []string
 	pluginConfDir string
 	prefix        string
+	noSuffix      bool
 }
 
 type PortMapping struct {

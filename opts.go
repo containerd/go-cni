@@ -35,6 +35,14 @@ func WithInterfacePrefix(prefix string) CNIOpt {
 	}
 }
 
+// WithoutInterfaceSuffix disables adding suffix for network interfaces
+func WithoutInterfaceSuffix() CNIOpt {
+	return func(c *libcni) error {
+		c.noSuffix = true
+		return nil
+	}
+}
+
 // WithPluginDir can be used to set the locations of
 // the cni plugin binaries
 func WithPluginDir(dirs []string) CNIOpt {
@@ -95,11 +103,16 @@ func WithConf(bytes []byte) CNIOpt {
 		if err != nil {
 			return err
 		}
-		c.networks = append(c.networks, &Network{
+		network := Network{
 			cni:    c.cniConfig,
 			config: confList,
-			ifName: getIfName(c.prefix, 0),
-		})
+			ifName: c.prefix,
+		}
+		if !c.noSuffix {
+			network.ifName = getIfName(c.prefix, 0)
+		}
+		c.networks = append(c.networks, &network)
+
 		return nil
 	}
 }
@@ -118,11 +131,15 @@ func WithConfFile(fileName string) CNIOpt {
 		if err != nil {
 			return err
 		}
-		c.networks = append(c.networks, &Network{
+		network := Network{
 			cni:    c.cniConfig,
 			config: confList,
-			ifName: getIfName(c.prefix, 0),
-		})
+			ifName: c.prefix,
+		}
+		if !c.noSuffix {
+			network.ifName = getIfName(c.prefix, 0)
+		}
+		c.networks = append(c.networks, &network)
 		return nil
 	}
 }
@@ -137,11 +154,15 @@ func WithConfListFile(fileName string) CNIOpt {
 			return err
 		}
 		i := len(c.networks)
-		c.networks = append(c.networks, &Network{
+		network := Network{
 			cni:    c.cniConfig,
 			config: confList,
-			ifName: getIfName(c.prefix, i),
-		})
+			ifName: c.prefix,
+		}
+		if !c.noSuffix {
+			network.ifName = getIfName(c.prefix, i)
+		}
+		c.networks = append(c.networks, &network)
 		return nil
 	}
 }
@@ -212,11 +233,16 @@ func loadFromConfDir(c *libcni, max int) error {
 			return errors.Wrapf(ErrInvalidConfig, "CNI config list %s has no networks, skipping", confFile)
 
 		}
-		networks = append(networks, &Network{
+		network := Network{
 			cni:    c.cniConfig,
 			config: confList,
-			ifName: getIfName(c.prefix, i),
-		})
+			ifName: c.prefix,
+		}
+		if !c.noSuffix {
+			network.ifName = getIfName(c.prefix, i)
+		}
+		networks = append(networks, &network)
+
 		i++
 		if i == max {
 			break
