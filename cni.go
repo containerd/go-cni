@@ -89,6 +89,7 @@ func defaultCNIConfig() *libcni {
 	}
 }
 
+// New creates a new libcni instance.
 func New(config ...CNIOpt) (CNI, error) {
 	cni := defaultCNIConfig()
 	var err error
@@ -100,6 +101,7 @@ func New(config ...CNIOpt) (CNI, error) {
 	return cni, nil
 }
 
+// Load loads the latest config from cni config files.
 func (c *libcni) Load(opts ...CNIOpt) error {
 	var err error
 	c.Lock()
@@ -116,17 +118,27 @@ func (c *libcni) Load(opts ...CNIOpt) error {
 	return nil
 }
 
+// Status returns the status of CNI initialization.
 func (c *libcni) Status() error {
 	c.RLock()
 	defer c.RUnlock()
-	return c.status()
+	if len(c.networks) < c.networkCount {
+		return ErrCNINotInitialized
+	}
+	return nil
+}
+
+// Networks returns all the configured networks.
+// NOTE: Caller MUST NOT modify anything in the returned array.
+func (c *libcni) Networks() []*Network {
+	c.RLock()
+	defer c.RUnlock()
+	return append([]*Network{}, c.networks...)
 }
 
 // Setup setups the network in the namespace
 func (c *libcni) Setup(id string, path string, opts ...NamespaceOpts) (*CNIResult, error) {
-	c.RLock()
-	defer c.RUnlock()
-	if err := c.status(); err != nil {
+	if err := c.Status(); err != nil {
 		return nil, err
 	}
 	ns, err := newNamespace(id, path, opts...)
@@ -134,7 +146,7 @@ func (c *libcni) Setup(id string, path string, opts ...NamespaceOpts) (*CNIResul
 		return nil, err
 	}
 	var results []*current.Result
-	for _, network := range c.networks {
+	for _, network := range c.Networks() {
 		r, err := network.Attach(ns)
 		if err != nil {
 			return nil, err
@@ -146,16 +158,14 @@ func (c *libcni) Setup(id string, path string, opts ...NamespaceOpts) (*CNIResul
 
 // Remove removes the network config from the namespace
 func (c *libcni) Remove(id string, path string, opts ...NamespaceOpts) error {
-	c.RLock()
-	defer c.RUnlock()
-	if err := c.status(); err != nil {
+	if err := c.Status(); err != nil {
 		return err
 	}
 	ns, err := newNamespace(id, path, opts...)
 	if err != nil {
 		return err
 	}
-	for _, network := range c.networks {
+	for _, network := range c.Networks() {
 		if err := network.Remove(ns); err != nil {
 			// Based on CNI spec v0.7.0, empty network namespace is allowed to
 			// do best effort cleanup. However, it is not handled consistently
@@ -203,11 +213,4 @@ func (c *libcni) GetConfig() *ConfigResult {
 
 func (c *libcni) reset() {
 	c.networks = nil
-}
-
-func (c *libcni) status() error {
-	if len(c.networks) < c.networkCount {
-		return ErrCNINotInitialized
-	}
-	return nil
 }
