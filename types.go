@@ -46,8 +46,8 @@ type IPRanges struct {
 
 // BandWidth defines the ingress/egress rate and burst limits
 type BandWidth struct {
-	IngressRate  int
-	IngressBurst int
-	EgressRate   int
-	EgressBurst  int
+	IngressRate  uint64
+	IngressBurst uint64
+	EgressRate   uint64
+	EgressBurst  uint64
 }
