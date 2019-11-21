@@ -16,7 +16,7 @@ before_script:
 script:
     - DCO_VERBOSITY=-q ../project/script/validate/dco
     - ../project/script/validate/fileheader ../project/
-    - ../project/script/validate/vendor
+    - env GO111MODULE=on ../project/script/validate/vendor
     - go test -race -coverprofile=coverage.txt -covermode=atomic
 
 after_success:
