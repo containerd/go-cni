@@ -11,4 +11,4 @@ require (
 	github.com/stretchr/testify v0.0.0-20180303142811-b89eecf5ca5d
 )
 
-go 1.12
+go 1.13
