@@ -1,0 +1,18 @@
+# github.com/containernetworking/cni v0.7.1
+github.com/containernetworking/cni/libcni
+github.com/containernetworking/cni/pkg/invoke
+github.com/containernetworking/cni/pkg/types
+github.com/containernetworking/cni/pkg/types/020
+github.com/containernetworking/cni/pkg/types/current
+github.com/containernetworking/cni/pkg/version
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
+# github.com/pkg/errors v0.8.0
+github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
+# github.com/stretchr/objx v0.0.0-20180129172003-8a3f7159479f
+github.com/stretchr/objx
+# github.com/stretchr/testify v0.0.0-20180303142811-b89eecf5ca5d
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/mock
