@@ -224,6 +224,11 @@ func (m *MockCNI) CheckNetwork(ctx context.Context, net *cnilibrary.NetworkConfi
 	return args.Error(0)
 }
 
+func (m *MockCNI) GetNetworkCachedConfig(net *cnilibrary.NetworkConfig, rt *cnilibrary.RuntimeConf) ([]byte, *cnilibrary.RuntimeConf, error) {
+	args := m.Called(net, rt)
+	return args.Get(0).([]byte), args.Get(1).(*cnilibrary.RuntimeConf), args.Error(1)
+}
+
 func (m *MockCNI) GetNetworkCachedResult(net *cnilibrary.NetworkConfig, rt *cnilibrary.RuntimeConf) (types.Result, error) {
 	args := m.Called(net, rt)
 	return args.Get(0).(types.Result), args.Error(1)
@@ -239,8 +244,12 @@ func (m *MockCNI) ValidateNetwork(ctx context.Context, net *cnilibrary.NetworkCo
 	return args.Get(0).([]string), args.Error(1)
 }
 
+func (m *MockCNI) GetNetworkListCachedConfig(net *cnilibrary.NetworkConfigList, rt *cnilibrary.RuntimeConf) ([]byte, *cnilibrary.RuntimeConf, error) {
+	args := m.Called(net, rt)
+	return args.Get(0).([]byte), args.Get(1).(*cnilibrary.RuntimeConf), args.Error(1)
+}
+
 func (m *MockCNI) GetNetworkListCachedResult(net *cnilibrary.NetworkConfigList, rt *cnilibrary.RuntimeConf) (types.Result, error) {
 	args := m.Called(net, rt)
 	return args.Get(0).(types.Result), args.Error(1)
-
 }
