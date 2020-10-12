@@ -5,6 +5,9 @@ go:
   - tip
 
 go_import_path: github.com/containerd/go-cni
+arch:
+  - AMD64
+  - ppc64le
 
 install:
   - go get -d
