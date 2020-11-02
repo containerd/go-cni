@@ -3,7 +3,9 @@ go:
   - 1.13.x
   - 1.14.x
   - tip
-
+arch:
+  - AMD64
+  - ppc64le
 go_import_path: github.com/containerd/go-cni
 
 install:
