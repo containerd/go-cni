@@ -24,7 +24,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type CNIOpt func(c *libcni) error
+type CNIOpt func(c *libcni) error //nolint: golint // type name will be used as cni.CNIOpt by other packages, and that stutters; consider calling this Opt
 
 // WithInterfacePrefix sets the prefix for network interfaces
 // e.g. eth or wlan

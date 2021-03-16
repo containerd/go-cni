@@ -29,6 +29,7 @@ type IPConfig struct {
 	Gateway net.IP
 }
 
+//nolint: golint // type name will be used as cni.CNIResult by other packages, and that stutters; consider calling this Result
 type CNIResult struct {
 	Interfaces map[string]*Config
 	DNS        []types.DNS
