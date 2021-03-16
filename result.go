@@ -29,8 +29,10 @@ type IPConfig struct {
 	Gateway net.IP
 }
 
-//nolint: golint // type name will be used as cni.CNIResult by other packages, and that stutters; consider calling this Result
-type CNIResult struct {
+// Deprecated: use cni.Result instead
+type CNIResult = Result //nolint: golint // type name will be used as cni.CNIResult by other packages, and that stutters
+
+type Result struct {
 	Interfaces map[string]*Config
 	DNS        []types.DNS
 	Routes     []*types.Route
@@ -54,11 +56,11 @@ type Config struct {
 // gateways, and routes assigned to sandbox and/or host interfaces.
 // c) DNS information. Dictionary that includes DNS information for nameservers,
 // domain, search domains and options.
-func (c *libcni) GetCNIResultFromResults(results []*current.Result) (*CNIResult, error) {
+func (c *libcni) GetCNIResultFromResults(results []*current.Result) (*Result, error) {
 	c.RLock()
 	defer c.RUnlock()
 
-	r := &CNIResult{
+	r := &Result{
 		Interfaces: make(map[string]*Config),
 	}
 
