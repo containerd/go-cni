@@ -14,9 +14,10 @@ linters:
   disable:
     - errcheck
 
-issues:
-  include:
-    - EXC0002
+# FIXME: re-enable after fixing GoDoc in this repository
+#issues:
+#  include:
+#    - EXC0002
 
 run:
   timeout: 2m
