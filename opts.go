@@ -24,9 +24,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Deprecated: use cni.Opt instead
-type CNIOpt = Opt //nolint: golint // type name will be used as cni.CNIOpt by other packages, and that stutters
-
 // Opt sets options for a CNI instance
 type Opt func(c *libcni) error
 
