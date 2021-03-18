@@ -125,6 +125,7 @@ func TestLibCNITypeCurrent(t *testing.T) {
 	l.networks[0].cni = mockCNI
 	l.networks[1].cni = mockCNI
 	ipv4, err := types.ParseCIDR("10.0.0.1/24")
+	assert.NoError(t, err)
 	expectedRT := &cnilibrary.RuntimeConf{
 		ContainerID:    "container-id1",
 		NetNS:          "/proc/12345/ns/net",
@@ -151,6 +152,7 @@ func TestLibCNITypeCurrent(t *testing.T) {
 	mockCNI.On("DelNetworkList", l.networks[0].config, expectedRT).Return(nil)
 
 	ipv4, err = types.ParseCIDR("10.0.0.2/24")
+	assert.NoError(t, err)
 	l.networks[1].cni = mockCNI
 	expectedRT = &cnilibrary.RuntimeConf{
 		ContainerID:    "container-id1",
