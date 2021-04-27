@@ -39,12 +39,16 @@ type IPConfig struct {
 //    gateways, and routes assigned to sandbox and/or host interfaces.
 // c) DNS information. Dictionary that includes DNS information for nameservers,
 //     domain, search domains and options.
-// d) Raw CNI results
 type Result struct {
 	Interfaces map[string]*Config
 	DNS        []types.DNS
 	Routes     []*types.Route
-	Raw        []*current.Result
+	raw        []*current.Result
+}
+
+// Raw returns the raw CNI results of multiple networks.
+func (r *Result) Raw() []*current.Result {
+	return r.raw
 }
 
 type Config struct {
@@ -62,7 +66,7 @@ func (c *libcni) createResult(results []*current.Result) (*Result, error) {
 	defer c.RUnlock()
 	r := &Result{
 		Interfaces: make(map[string]*Config),
-		Raw:        results,
+		raw:        results,
 	}
 
 	// Plugins may not need to return Interfaces in result if
