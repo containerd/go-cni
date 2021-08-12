@@ -24,12 +24,13 @@ import (
 	cnilibrary "github.com/containernetworking/cni/libcni"
 	"github.com/containernetworking/cni/pkg/types"
 	types020 "github.com/containernetworking/cni/pkg/types/020"
-	"github.com/containernetworking/cni/pkg/types/current"
+	types040 "github.com/containernetworking/cni/pkg/types/040"
+	types100 "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-// TestLibCNIType020 tests the cni version 2.0 plugin
+// TestLibCNIType020 tests the cni version 0.2.0 plugin
 // config and parses the result into structured data
 func TestLibCNIType020(t *testing.T) {
 	// Get the default CNI config
@@ -56,6 +57,7 @@ func TestLibCNIType020(t *testing.T) {
 		CapabilityArgs: map[string]interface{}{},
 	}
 	mockCNI.On("AddNetworkList", l.networks[0].config, expectedRT).Return(&types020.Result{
+		CNIVersion: "0.2.0",
 		IP4: &types020.IPConfig{
 			IP: net.IPNet{
 				IP: []byte{10, 0, 0, 1},
@@ -72,6 +74,7 @@ func TestLibCNIType020(t *testing.T) {
 		CapabilityArgs: map[string]interface{}{},
 	}
 	mockCNI.On("AddNetworkList", l.networks[1].config, expectedRT).Return(&types020.Result{
+		CNIVersion: "0.2.0",
 		IP4: &types020.IPConfig{
 			IP: net.IPNet{
 				IP: []byte{10, 0, 0, 2},
@@ -104,9 +107,9 @@ func TestLibCNIType020(t *testing.T) {
 	assert.Equal(t, "eth0", c.Networks[0].IFName)
 }
 
-// TestLibCNITypeCurrent tests the cni version 3.x plugin
+// TestLibCNIType040 tests the cni version 0.4.0 plugin
 // config and parses the result into structured data
-func TestLibCNITypeCurrent(t *testing.T) {
+func TestLibCNIType040(t *testing.T) {
 	// Get the default CNI config
 	l := defaultCNIConfig()
 	// Create a fake cni config directory and file
@@ -133,17 +136,17 @@ func TestLibCNITypeCurrent(t *testing.T) {
 		Args:           [][2]string(nil),
 		CapabilityArgs: map[string]interface{}{},
 	}
-	mockCNI.On("AddNetworkList", l.networks[0].config, expectedRT).Return(&current.Result{
-		CNIVersion: "0.3.1",
-		Interfaces: []*current.Interface{
+	mockCNI.On("AddNetworkList", l.networks[0].config, expectedRT).Return(&types040.Result{
+		CNIVersion: "0.3.1", // covered by types040
+		Interfaces: []*types040.Interface{
 			{
 				Name: "eth0",
 			},
 		},
-		IPs: []*current.IPConfig{
+		IPs: []*types040.IPConfig{
 			{
 				Version:   "4",
-				Interface: current.Int(0),
+				Interface: types100.Int(0),
 				Address:   *ipv4,
 				Gateway:   net.ParseIP("10.0.0.255"),
 			},
@@ -161,17 +164,17 @@ func TestLibCNITypeCurrent(t *testing.T) {
 		Args:           [][2]string(nil),
 		CapabilityArgs: map[string]interface{}{},
 	}
-	mockCNI.On("AddNetworkList", l.networks[1].config, expectedRT).Return(&current.Result{
-		CNIVersion: "0.3.1",
-		Interfaces: []*current.Interface{
+	mockCNI.On("AddNetworkList", l.networks[1].config, expectedRT).Return(&types040.Result{
+		CNIVersion: "0.3.1", // covered by types040
+		Interfaces: []*types040.Interface{
 			{
 				Name: "eth1",
 			},
 		},
-		IPs: []*current.IPConfig{
+		IPs: []*types040.IPConfig{
 			{
 				Version:   "4",
-				Interface: current.Int(0),
+				Interface: types100.Int(0),
 				Address:   *ipv4,
 				Gateway:   net.ParseIP("10.0.0.2"),
 			},
