@@ -195,6 +195,92 @@ func TestLibCNIType040(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// TestLibCNIType100 tests the cni version 1.0.0 plugin
+// config and parses the result into structured data
+func TestLibCNIType100(t *testing.T) {
+	// Get the default CNI config
+	l := defaultCNIConfig()
+	// Create a fake cni config directory and file
+	cniDir, confDir := makeFakeCNIConfig(t)
+	defer tearDownCNIConfig(t, cniDir)
+	l.pluginConfDir = confDir
+	// Set the minimum network count as 2 for this test
+	l.networkCount = 2
+	err := l.Load(WithAllConf)
+	assert.NoError(t, err)
+
+	err = l.Status()
+	assert.NoError(t, err)
+
+	mockCNI := &MockCNI{}
+	l.networks[0].cni = mockCNI
+	l.networks[1].cni = mockCNI
+	ipv4, err := types.ParseCIDR("10.0.0.1/24")
+	assert.NoError(t, err)
+	expectedRT := &cnilibrary.RuntimeConf{
+		ContainerID:    "container-id1",
+		NetNS:          "/proc/12345/ns/net",
+		IfName:         "eth0",
+		Args:           [][2]string(nil),
+		CapabilityArgs: map[string]interface{}{},
+	}
+	mockCNI.On("AddNetworkList", l.networks[0].config, expectedRT).Return(&types100.Result{
+		CNIVersion: "1.0.0",
+		Interfaces: []*types100.Interface{
+			{
+				Name: "eth0",
+			},
+		},
+		IPs: []*types100.IPConfig{
+			{
+				Interface: types100.Int(0),
+				Address:   *ipv4,
+				Gateway:   net.ParseIP("10.0.0.255"),
+			},
+		},
+	}, nil)
+	mockCNI.On("DelNetworkList", l.networks[0].config, expectedRT).Return(nil)
+
+	ipv4, err = types.ParseCIDR("10.0.0.2/24")
+	assert.NoError(t, err)
+	l.networks[1].cni = mockCNI
+	expectedRT = &cnilibrary.RuntimeConf{
+		ContainerID:    "container-id1",
+		NetNS:          "/proc/12345/ns/net",
+		IfName:         "eth1",
+		Args:           [][2]string(nil),
+		CapabilityArgs: map[string]interface{}{},
+	}
+	mockCNI.On("AddNetworkList", l.networks[1].config, expectedRT).Return(&types100.Result{
+		CNIVersion: "1.0.0",
+		Interfaces: []*types100.Interface{
+			{
+				Name: "eth1",
+			},
+		},
+		IPs: []*types100.IPConfig{
+			{
+				Interface: types100.Int(0),
+				Address:   *ipv4,
+				Gateway:   net.ParseIP("10.0.0.2"),
+			},
+		},
+	}, nil)
+	mockCNI.On("DelNetworkList", l.networks[1].config, expectedRT).Return(nil)
+
+	ctx := context.Background()
+	r, err := l.Setup(ctx, "container-id1", "/proc/12345/ns/net")
+	assert.NoError(t, err)
+	assert.Contains(t, r.Interfaces, "eth0")
+	assert.NotNil(t, r.Interfaces["eth0"].IPConfigs)
+	assert.Equal(t, r.Interfaces["eth0"].IPConfigs[0].IP.String(), "10.0.0.1")
+	assert.Contains(t, r.Interfaces, "eth1")
+	assert.NotNil(t, r.Interfaces["eth1"].IPConfigs)
+	assert.Equal(t, r.Interfaces["eth1"].IPConfigs[0].IP.String(), "10.0.0.2")
+	err = l.Remove(ctx, "container-id1", "/proc/12345/ns/net")
+	assert.NoError(t, err)
+}
+
 type MockCNI struct {
 	mock.Mock
 }
