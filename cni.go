@@ -24,7 +24,7 @@ import (
 
 	cnilibrary "github.com/containernetworking/cni/libcni"
 	"github.com/containernetworking/cni/pkg/types"
-	"github.com/containernetworking/cni/pkg/types/current"
+	types100 "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/pkg/errors"
 )
 
@@ -155,8 +155,8 @@ func (c *libcni) Setup(ctx context.Context, id string, path string, opts ...Name
 	return c.createResult(result)
 }
 
-func (c *libcni) attachNetworks(ctx context.Context, ns *Namespace) ([]*current.Result, error) {
-	var results []*current.Result
+func (c *libcni) attachNetworks(ctx context.Context, ns *Namespace) ([]*types100.Result, error) {
+	var results []*types100.Result
 	for _, network := range c.Networks() {
 		r, err := network.Attach(ctx, ns)
 		if err != nil {
