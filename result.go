@@ -17,11 +17,11 @@
 package cni
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/containernetworking/cni/pkg/types"
 	types100 "github.com/containernetworking/cni/pkg/types/100"
-	"github.com/pkg/errors"
 )
 
 type IPConfig struct {
@@ -87,7 +87,7 @@ func (c *libcni) createResult(results []*types100.Result) (*Result, error) {
 		// interfaces
 		for _, ipConf := range result.IPs {
 			if err := validateInterfaceConfig(ipConf, len(result.Interfaces)); err != nil {
-				return nil, errors.Wrapf(ErrInvalidResult, "invalid interface config: %v", err)
+				return nil, fmt.Errorf("invalid interface config: %v: %w", err, ErrInvalidResult)
 			}
 			name := c.getInterfaceName(result.Interfaces, ipConf)
 			r.Interfaces[name].IPConfigs = append(r.Interfaces[name].IPConfigs,
@@ -97,7 +97,7 @@ func (c *libcni) createResult(results []*types100.Result) (*Result, error) {
 		r.Routes = append(r.Routes, result.Routes...)
 	}
 	if _, ok := r.Interfaces[defaultInterface(c.prefix)]; !ok {
-		return nil, errors.Wrapf(ErrNotFound, "default network not found for: %s", defaultInterface(c.prefix))
+		return nil, fmt.Errorf("default network not found for: %s: %w", defaultInterface(c.prefix), ErrNotFound)
 	}
 	return r, nil
 }
