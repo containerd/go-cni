@@ -25,7 +25,6 @@ import (
 	cnilibrary "github.com/containernetworking/cni/libcni"
 	"github.com/containernetworking/cni/pkg/types"
 	types100 "github.com/containernetworking/cni/pkg/types/100"
-	"github.com/pkg/errors"
 )
 
 type CNI interface {
@@ -115,7 +114,7 @@ func (c *libcni) Load(opts ...Opt) error {
 
 	for _, o := range opts {
 		if err = o(c); err != nil {
-			return errors.Wrapf(ErrLoad, fmt.Sprintf("cni config load failed: %v", err))
+			return fmt.Errorf("cni config load failed: %v: %w", err, ErrLoad)
 		}
 	}
 	return nil
