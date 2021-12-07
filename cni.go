@@ -154,16 +154,39 @@ func (c *libcni) Setup(ctx context.Context, id string, path string, opts ...Name
 	return c.createResult(result)
 }
 
+type asynchAttachResult struct {
+	res *types100.Result
+	err error
+}
+
+func asynchAttach(ctx context.Context, n *Network, ns *Namespace, wg *sync.WaitGroup, rc chan asynchAttachResult) {
+	defer wg.Done()
+	r, err := n.Attach(ctx, ns)
+	rc <- asynchAttachResult{res: r, err: err}
+}
+
 func (c *libcni) attachNetworks(ctx context.Context, ns *Namespace) ([]*types100.Result, error) {
+	var wg sync.WaitGroup
+	var lastError error
 	var results []*types100.Result
+	rc := make(chan asynchAttachResult)
+
 	for _, network := range c.Networks() {
-		r, err := network.Attach(ctx, ns)
-		if err != nil {
-			return nil, err
-		}
-		results = append(results, r)
+		wg.Add(1)
+		go asynchAttach(ctx, network, ns, &wg, rc)
 	}
-	return results, nil
+
+	for range c.Networks() {
+		rs := <-rc
+		if rs.err != nil {
+			lastError = rs.err
+		} else {
+			results = append(results, rs.res)
+		}
+	}
+	wg.Wait()
+
+	return results, lastError
 }
 
 // Remove removes the network config from the namespace
