@@ -155,38 +155,38 @@ func (c *libcni) Setup(ctx context.Context, id string, path string, opts ...Name
 }
 
 type asynchAttachResult struct {
-	res *types100.Result
-	err error
+	index int
+	res   *types100.Result
+	err   error
 }
 
-func asynchAttach(ctx context.Context, n *Network, ns *Namespace, wg *sync.WaitGroup, rc chan asynchAttachResult) {
+func asynchAttach(ctx context.Context, index int, n *Network, ns *Namespace, wg *sync.WaitGroup, rc chan asynchAttachResult) {
 	defer wg.Done()
 	r, err := n.Attach(ctx, ns)
-	rc <- asynchAttachResult{res: r, err: err}
+	rc <- asynchAttachResult{index: index, res: r, err: err}
 }
 
 func (c *libcni) attachNetworks(ctx context.Context, ns *Namespace) ([]*types100.Result, error) {
 	var wg sync.WaitGroup
-	var lastError error
-	var results []*types100.Result
+	var firstError error
+	results := make([]*types100.Result, len(c.Networks()))
 	rc := make(chan asynchAttachResult)
 
-	for _, network := range c.Networks() {
+	for i, network := range c.Networks() {
 		wg.Add(1)
-		go asynchAttach(ctx, network, ns, &wg, rc)
+		go asynchAttach(ctx, i, network, ns, &wg, rc)
 	}
 
 	for range c.Networks() {
 		rs := <-rc
-		if rs.err != nil {
-			lastError = rs.err
-		} else {
-			results = append(results, rs.res)
+		if rs.err != nil && firstError == nil {
+			firstError = rs.err
 		}
+		results[rs.index] = rs.res
 	}
 	wg.Wait()
 
-	return results, lastError
+	return results, firstError
 }
 
 // Remove removes the network config from the namespace
