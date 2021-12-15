@@ -32,6 +32,8 @@ type CNI interface {
 	Setup(ctx context.Context, id string, path string, opts ...NamespaceOpts) (*Result, error)
 	// Remove tears down the network of the namespace.
 	Remove(ctx context.Context, id string, path string, opts ...NamespaceOpts) error
+	// Check checks if the network is still in desired state
+	Check(ctx context.Context, id string, path string, opts ...NamespaceOpts) error
 	// Load loads the cni network config
 	Load(opts ...Opt) error
 	// Status checks the status of the cni initialization
@@ -191,6 +193,25 @@ func (c *libcni) Remove(ctx context.Context, id string, path string, opts ...Nam
 			return err
 		}
 	}
+	return nil
+}
+
+// Check checks if the network is still in desired state
+func (c *libcni) Check(ctx context.Context, id string, path string, opts ...NamespaceOpts) error {
+	if err := c.Status(); err != nil {
+		return err
+	}
+	ns, err := newNamespace(id, path, opts...)
+	if err != nil {
+		return err
+	}
+	for _, network := range c.Networks() {
+		err := network.Check(ctx, ns)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
