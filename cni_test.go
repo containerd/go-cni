@@ -240,7 +240,7 @@ func TestLibCNIType100(t *testing.T) {
 		},
 	}, nil)
 	mockCNI.On("DelNetworkList", l.networks[0].config, expectedRT).Return(nil)
-
+	mockCNI.On("CheckNetworkList", l.networks[0].config, expectedRT).Return(nil)
 	ipv4, err = types.ParseCIDR("10.0.0.2/24")
 	assert.NoError(t, err)
 	l.networks[1].cni = mockCNI
@@ -267,7 +267,7 @@ func TestLibCNIType100(t *testing.T) {
 		},
 	}, nil)
 	mockCNI.On("DelNetworkList", l.networks[1].config, expectedRT).Return(nil)
-
+	mockCNI.On("CheckNetworkList", l.networks[1].config, expectedRT).Return(nil)
 	ctx := context.Background()
 	r, err := l.Setup(ctx, "container-id1", "/proc/12345/ns/net")
 	assert.NoError(t, err)
@@ -277,6 +277,10 @@ func TestLibCNIType100(t *testing.T) {
 	assert.Contains(t, r.Interfaces, "eth1")
 	assert.NotNil(t, r.Interfaces["eth1"].IPConfigs)
 	assert.Equal(t, r.Interfaces["eth1"].IPConfigs[0].IP.String(), "10.0.0.2")
+
+	err = l.Check(ctx, "container-id1", "/proc/12345/ns/net")
+	assert.NoError(t, err)
+
 	err = l.Remove(ctx, "container-id1", "/proc/12345/ns/net")
 	assert.NoError(t, err)
 }
