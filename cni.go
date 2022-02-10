@@ -19,12 +19,15 @@ package cni
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 
 	cnilibrary "github.com/containernetworking/cni/libcni"
+	"github.com/containernetworking/cni/pkg/invoke"
 	"github.com/containernetworking/cni/pkg/types"
 	types100 "github.com/containernetworking/cni/pkg/types/100"
+	"github.com/containernetworking/cni/pkg/version"
 )
 
 type CNI interface {
@@ -86,9 +89,15 @@ func defaultCNIConfig() *libcni {
 			pluginMaxConfNum: DefaultMaxConfNum,
 			prefix:           DefaultPrefix,
 		},
-		cniConfig: &cnilibrary.CNIConfig{
-			Path: []string{DefaultCNIDir},
-		},
+		cniConfig: cnilibrary.NewCNIConfig(
+			[]string{
+				DefaultCNIDir,
+			},
+			&invoke.DefaultExec{
+				RawExec:       &invoke.RawExec{Stderr: os.Stderr},
+				PluginDecoder: version.PluginDecoder{},
+			},
+		),
 		networkCount: 1,
 	}
 }
