@@ -29,7 +29,7 @@ import (
 
 func main() {
 	id := "example"
-	netns := "/var/run/netns/example-ns-1"
+	netns := fmt.Sprintf("/proc/%d/ns/net", os.Getpid())
 
 	// CNI allows multiple CNI configurations and the network interface
 	// will be named by eth0, eth1, ..., ethN.
