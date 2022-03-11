@@ -16,6 +16,26 @@ A generic CNI library to provide APIs for CNI plugin interactions. The library p
 go-cni aims to support plugins that implement [Container Network Interface](https://github.com/containernetworking/cni)
 
 ## Usage
+#### 1. Confirm that the cni plugin exists
+
+```shell
+➜  ~ ls /opt/cni/bin
+bandwidth  bridge  dhcp  firewall  flannel  host-device  host-local  ipvlan  loopback  macvlan  portmap  ptp  sbr  static  tuning  vlan  vrf
+```
+
+#### 2. create `example-ns-1` netns
+
+```shell
+➜  ~ ip netns add example-ns-1
+```
+
+#### 3. Add cni config
+
+```shell
+echo '{"cniVersion":"0.4.0","name":"myptp","type":"ptp","ipMasq":true,"ipam":{"type":"host-local","subnet":"172.16.29.0/24","routes":[{"dst":"0.0.0.0/0"}]}}' | sudo tee /etc/cni/net.d/10-myptp.conf
+```
+
+#### 4. Build code
 ```go
 package main
 
@@ -23,13 +43,13 @@ import (
 	"context"
 	"fmt"
 	"log"
-
+	
 	gocni "github.com/containerd/go-cni"
 )
 
 func main() {
 	id := "example"
-	netns := fmt.Sprintf("/proc/%d/ns/net", os.Getpid())
+	netns := "/var/run/netns/example-ns-1"
 
 	// CNI allows multiple CNI configurations and the network interface
 	// will be named by eth0, eth1, ..., ethN.
@@ -82,6 +102,11 @@ func main() {
 	IP := result.Interfaces[defaultIfName].IPConfigs[0].IP.String()
 	fmt.Printf("IP of the default interface %s:%s", defaultIfName, IP)
 }
+```
+```shell
+➜  cni go build cni-demo.go
+➜  cni ./cni-demo
+IP of the default interface eth0:172.16.29.4#
 ```
 
 ## Project details
