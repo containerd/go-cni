@@ -20,7 +20,7 @@
 #
 set -euo pipefail
 
-DEFAULT_CNI_PLUGIN_COMMIT=v1.0.1
+DEFAULT_CNI_PLUGIN_COMMIT=v1.1.1
 CNI_DIR=/opt/cni
 
 TMPROOT=$(mktemp -d)
