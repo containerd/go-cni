@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v3
         with:
           go-version: 1.17.x
 
@@ -24,7 +24,7 @@ jobs:
           echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
           echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           path: src/github.com/containerd/go-cni
           fetch-depth: 25
@@ -48,9 +48,13 @@ jobs:
         os: [ubuntu-18.04]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           path: src/github.com/containerd/go-cni
+
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
 
       - name: Set env
         shell: bash
@@ -58,7 +62,7 @@ jobs:
           echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
           echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
 
-      - uses: golangci/golangci-lint-action@v2
+      - uses: golangci/golangci-lint-action@v3
         with:
           version: v1.29
           working-directory: src/github.com/containerd/go-cni
@@ -69,11 +73,11 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           path: src/github.com/containerd/go-cni
 
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v3
         with:
           go-version: 1.17.x
 
