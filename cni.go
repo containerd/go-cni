@@ -19,6 +19,8 @@ package cni
 import (
 	"context"
 	"fmt"
+	"github.com/containernetworking/plugins/pkg/ns"
+	"github.com/vishvananda/netlink"
 	"os"
 	"strings"
 	"sync"
@@ -162,7 +164,29 @@ func (c *libcni) Setup(ctx context.Context, id string, path string, opts ...Name
 	if err != nil {
 		return nil, err
 	}
+
+	if err := setupLoopback(path); err != nil {
+		return nil, err
+	}
+
 	return c.createResult(result)
+}
+
+func setupLoopback(netnsPath string) error {
+	if err := ns.WithNetNSPath(netnsPath, func(_ ns.NetNS) error {
+		link, err := netlink.LinkByName("lo")
+		if err != nil {
+			return err
+		}
+		if err := netlink.LinkSetUp(link); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error setting loopback to up: %s", err)
+	}
+
+	return nil
 }
 
 type asynchAttachResult struct {
