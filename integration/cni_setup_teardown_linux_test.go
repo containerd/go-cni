@@ -90,6 +90,42 @@ var (
   ]
 }
 `
+
+	cniBridgePluginCfgWithoutVersion = `
+{
+  "name": "gocni-test",
+  "plugins": [
+    {
+      "type":"bridge",
+      "bridge":"gocni-test0",
+      "isGateway":true,
+      "ipMasq":true,
+      "promiscMode":true,
+      "ipam":{
+        "type":"host-local",
+        "ranges":[
+          [{
+            "subnet":"10.88.0.0/16"
+          }],
+          [{
+            "subnet":"2001:4860:4860::/64"
+          }]
+        ],
+        "routes":[
+          {"dst":"0.0.0.0/0"},
+          {"dst":"::/0"}
+        ]
+       }
+    },
+    {
+      "type":"portmap",
+      "capabilities":{
+        "portMappings":true
+      }
+    }
+  ]
+}
+`
 )
 
 // TestBasicSetupAndRemove tests the cni.Setup/Remove with real bridge and
@@ -113,6 +149,79 @@ func TestBasicSetupAndRemove(t *testing.T) {
 		ioutil.WriteFile(
 			path.Join(tmpPluginConfDir, "10-gocni-test-net.conflist"),
 			[]byte(cniBridgePluginCfg),
+			0600,
+		),
+		"init cni config",
+	)
+
+	// copy plugins from /opt/cni/bin
+	tmpPluginDir, err := os.MkdirTemp("", t.Name()+"-bin")
+	assert.NoError(t, err, "create temp dir for plugin bin dir")
+	defer os.RemoveAll(tmpPluginDir)
+
+	assert.NoError(t,
+		fs.CopyDir(tmpPluginDir, defaultCNIPluginDir),
+		"copy %v into %v", defaultCNIPluginDir, tmpPluginDir)
+
+	nsPath, done, err := createNetNS()
+	assert.NoError(t, err, "create temp netns")
+	defer func() {
+		assert.NoError(t, done(), "cleanup temp netns")
+	}()
+
+	defaultIfName := "eth0"
+	ctx := context.Background()
+	id := t.Name()
+
+	for idx, opts := range [][]cni.Opt{
+		// Use default plugin dir
+		{
+			cni.WithMinNetworkCount(2),
+			cni.WithPluginConfDir(tmpPluginConfDir),
+		},
+		// Use customize plugin dir
+		{
+			cni.WithMinNetworkCount(2),
+			cni.WithPluginConfDir(tmpPluginConfDir),
+			cni.WithPluginDir([]string{
+				tmpPluginDir,
+			}),
+		},
+	} {
+		l, err := cni.New(opts...)
+		assert.NoError(t, err, "[%v] initialize cni library", idx)
+
+		assert.NoError(t,
+			l.Load(cni.WithLoNetwork, cni.WithDefaultConf),
+			"[%v] load cni configuration", idx,
+		)
+
+		// Setup network
+		result, err := l.Setup(ctx, id, nsPath)
+		assert.NoError(t, err, "[%v] setup network for namespace %v", idx, nsPath)
+
+		ip := result.Interfaces[defaultIfName].IPConfigs[0].IP.String()
+		t.Logf("[%v] ip is %v", idx, ip)
+
+		assert.NoError(t,
+			l.Remove(ctx, id, nsPath),
+			"[%v] teardown network for namespace %v", idx, nsPath,
+		)
+	}
+}
+
+func TestBasicSetupAndRemovePluginWithoutVersion(t *testing.T) {
+	testutil.RequiresRoot(t)
+
+	// setup config dir
+	tmpPluginConfDir, err := os.MkdirTemp("", t.Name()+"-conf")
+	assert.NoError(t, err, "create temp dir for plugin conf dir")
+	defer os.RemoveAll(tmpPluginConfDir)
+
+	assert.NoError(t,
+		ioutil.WriteFile(
+			path.Join(tmpPluginConfDir, "10-gocni-test-net.conflist"),
+			[]byte(cniBridgePluginCfgWithoutVersion),
 			0600,
 		),
 		"init cni config",
