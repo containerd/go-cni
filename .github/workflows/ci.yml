@@ -89,8 +89,7 @@ jobs:
 
       - run: |
           bash -x script/install-cni
-          make clean V=1
-          make bin/integration.test V=1
+          sudo make clean V=1
           make test V=1
           sudo make integration V=1
         working-directory: src/github.com/containerd/go-cni
