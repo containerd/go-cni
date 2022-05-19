@@ -198,14 +198,26 @@ func TestBasicSetupAndRemove(t *testing.T) {
 
 		// Setup network
 		result, err := l.Setup(ctx, id, nsPath)
-		assert.NoError(t, err, "[%v] setup network for namespace %v", idx, nsPath)
+		assert.NoError(t, err, "[%v] setup network interfaces for namespace in parallel %v", idx, nsPath)
 
 		ip := result.Interfaces[defaultIfName].IPConfigs[0].IP.String()
 		t.Logf("[%v] ip is %v", idx, ip)
 
 		assert.NoError(t,
 			l.Remove(ctx, id, nsPath),
-			"[%v] teardown network for namespace %v", idx, nsPath,
+			"[%v] teardown network interfaces for namespace %v", idx, nsPath,
+		)
+
+		// Setup network serially
+		result, err = l.SetupSerially(ctx, id, nsPath)
+		assert.NoError(t, err, "[%v] setup network interfaces for namespace serially%v", idx, nsPath)
+
+		ip = result.Interfaces[defaultIfName].IPConfigs[0].IP.String()
+		t.Logf("[%v] ip is %v", idx, ip)
+
+		assert.NoError(t,
+			l.Remove(ctx, id, nsPath),
+			"[%v] teardown network interfaces for namespace %v", idx, nsPath,
 		)
 	}
 }
@@ -271,14 +283,26 @@ func TestBasicSetupAndRemovePluginWithoutVersion(t *testing.T) {
 
 		// Setup network
 		result, err := l.Setup(ctx, id, nsPath)
-		assert.NoError(t, err, "[%v] setup network for namespace %v", idx, nsPath)
+		assert.NoError(t, err, "[%v] setup network interfaces for namespace in parallel %v", idx, nsPath)
 
 		ip := result.Interfaces[defaultIfName].IPConfigs[0].IP.String()
 		t.Logf("[%v] ip is %v", idx, ip)
 
 		assert.NoError(t,
 			l.Remove(ctx, id, nsPath),
-			"[%v] teardown network for namespace %v", idx, nsPath,
+			"[%v] teardown network interfaces for namespace %v", idx, nsPath,
+		)
+
+		// Setup network serially
+		result, err = l.SetupSerially(ctx, id, nsPath)
+		assert.NoError(t, err, "[%v] setup network interfaces for namespace serially%v", idx, nsPath)
+
+		ip = result.Interfaces[defaultIfName].IPConfigs[0].IP.String()
+		t.Logf("[%v] ip is %v", idx, ip)
+
+		assert.NoError(t,
+			l.Remove(ctx, id, nsPath),
+			"[%v] teardown network interfaces for namespace %v", idx, nsPath,
 		)
 	}
 }
