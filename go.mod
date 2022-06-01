@@ -3,7 +3,7 @@ module github.com/containerd/go-cni
 go 1.17
 
 require (
-	github.com/containernetworking/cni v1.1.0
+	github.com/containernetworking/cni v1.1.1
 	github.com/stretchr/testify v1.6.1
 )
 
