@@ -35,7 +35,6 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"runtime"
@@ -146,7 +145,7 @@ func TestBasicSetupAndRemove(t *testing.T) {
 	defer os.RemoveAll(tmpPluginConfDir)
 
 	assert.NoError(t,
-		ioutil.WriteFile(
+		os.WriteFile(
 			path.Join(tmpPluginConfDir, "10-gocni-test-net.conflist"),
 			[]byte(cniBridgePluginCfg),
 			0600,
@@ -231,7 +230,7 @@ func TestBasicSetupAndRemovePluginWithoutVersion(t *testing.T) {
 	defer os.RemoveAll(tmpPluginConfDir)
 
 	assert.NoError(t,
-		ioutil.WriteFile(
+		os.WriteFile(
 			path.Join(tmpPluginConfDir, "10-gocni-test-net.conflist"),
 			[]byte(cniBridgePluginCfgWithoutVersion),
 			0600,
