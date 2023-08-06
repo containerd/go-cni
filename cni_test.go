@@ -285,6 +285,131 @@ func TestLibCNIType100(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestBuildNetworksWithAnnotation(t *testing.T) {
+	// Get the default CNI config
+	l := defaultCNIConfig()
+	// Create a fake cni config directory and file
+	cniDir, confDir := makeFakeCNIConfig(t)
+	defer tearDownCNIConfig(t, cniDir)
+	l.pluginConfDir = confDir
+	// Set the minimum network count as 2 for this test
+	l.networkCount = 2
+	err := l.Load(WithLoNetwork, WithAllConf)
+	assert.NoError(t, err)
+
+	err = l.Status()
+	assert.NoError(t, err)
+
+	net := []*NetworkInterface{
+		{
+			NetworkName:   "cni-loopback",
+			InterfaceName: "lo",
+		},
+		{
+			NetworkName: "plugin1",
+			//InterfaceName: "This should be commented out"
+		},
+		{
+			NetworkName:   "plugin2",
+			InterfaceName: "net1",
+		},
+		{
+			NetworkName:   "plugin2",
+			InterfaceName: "net10",
+		},
+	}
+
+	networks, err := l.BuildMultiNetwork(net)
+
+	assert.NoError(t, err)
+
+	if err != nil {
+		t.Fail()
+	}
+
+	assert.Equal(t, len(networks), 4)
+
+	assert.Equal(t, "lo", networks[0].ifName)
+	assert.Equal(t, "cni-loopback", networks[0].config.Name)
+
+	assert.Equal(t, "eth0", networks[1].ifName)
+	assert.Equal(t, "plugin1", networks[1].config.Name)
+
+	assert.Equal(t, "net1", networks[2].ifName)
+	assert.Equal(t, "plugin2", networks[2].config.Name)
+
+	assert.Equal(t, "net10", networks[3].ifName)
+	assert.Equal(t, "plugin2", networks[3].config.Name)
+}
+
+func TestBuildNetworksDuplicateIfName(t *testing.T) {
+	// Get the default CNI config
+	l := defaultCNIConfig()
+	// Create a fake cni config directory and file
+	cniDir, confDir := makeFakeCNIConfig(t)
+	defer tearDownCNIConfig(t, cniDir)
+	l.pluginConfDir = confDir
+	// Set the minimum network count as 2 for this test
+	l.networkCount = 2
+	err := l.Load(WithLoNetwork, WithAllConf)
+	assert.NoError(t, err)
+
+	err = l.Status()
+	assert.NoError(t, err)
+
+	net := []*NetworkInterface{
+		{
+			NetworkName:   "plugin2",
+			InterfaceName: "net10",
+		},
+		{
+			NetworkName:   "cni-loopback",
+			InterfaceName: "lo",
+		},
+		{
+			NetworkName: "plugin1",
+			//InterfaceName: "This should be commented out"
+		},
+		{
+			NetworkName:   "plugin2",
+			InterfaceName: "net10",
+		},
+	}
+
+	_, err = l.BuildMultiNetwork(net)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "the interface: net10 already exists and must be unique")
+}
+
+func TestBuildNetworksMissingNetworkConfig(t *testing.T) {
+	// Get the default CNI config
+	l := defaultCNIConfig()
+	// Create a fake cni config directory and file
+	cniDir, confDir := makeFakeCNIConfig(t)
+	defer tearDownCNIConfig(t, cniDir)
+	l.pluginConfDir = confDir
+	// Set the minimum network count as 2 for this test
+	l.networkCount = 2
+	err := l.Load(WithLoNetwork, WithAllConf)
+	assert.NoError(t, err)
+
+	err = l.Status()
+	assert.NoError(t, err)
+
+	net := []*NetworkInterface{
+		{
+			NetworkName:   "thisdoesnotexist",
+			InterfaceName: "net10",
+		},
+	}
+
+	_, err = l.BuildMultiNetwork(net)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "the network config: thisdoesnotexist does not exist")
+}
+
 type MockCNI struct {
 	mock.Mock
 }
