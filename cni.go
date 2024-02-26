@@ -45,6 +45,8 @@ type CNI interface {
 	Status() error
 	// GetConfig returns a copy of the CNI plugin configurations as parsed by CNI
 	GetConfig() *ConfigResult
+	// Status executes the status verb of the cni plugin
+	StatusDetail(context.Context) ([]*NetworkStatus, error)
 }
 
 type ConfigResult struct {
@@ -133,7 +135,6 @@ func (c *libcni) Load(opts ...Opt) error {
 	return nil
 }
 
-// Status returns the status of CNI initialization.
 func (c *libcni) Status() error {
 	c.RLock()
 	defer c.RUnlock()
@@ -309,4 +310,24 @@ func (c *libcni) GetConfig() *ConfigResult {
 
 func (c *libcni) reset() {
 	c.networks = nil
+}
+
+// StatusDetail returns a slice of network statuses
+func (c *libcni) StatusDetail(ctx context.Context) ([]*NetworkStatus, error) {
+	err := c.Status()
+
+	if err != nil {
+		return nil, err
+	}
+
+	var networks []*NetworkStatus
+
+	for _, network := range c.Networks() {
+		networks = append(networks, &NetworkStatus{
+			Network: network,
+			Status:  network.Status(ctx),
+		})
+	}
+
+	return networks, nil
 }

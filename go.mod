@@ -1,9 +1,9 @@
 module github.com/containerd/go-cni
 
-go 1.19
+go 1.21
 
 require (
-	github.com/containernetworking/cni v1.1.2
+	github.com/containernetworking/cni v1.2.3
 	github.com/stretchr/testify v1.8.0
 )
 

@@ -26,6 +26,7 @@ import (
 	types020 "github.com/containernetworking/cni/pkg/types/020"
 	types040 "github.com/containernetworking/cni/pkg/types/040"
 	types100 "github.com/containernetworking/cni/pkg/types/100"
+	"github.com/containernetworking/cni/pkg/version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -285,36 +286,127 @@ func TestLibCNIType100(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// TestLibCNIType120 tests the cni version 1.1.0 plugin
+// config and parses the result into structured data
+func TestLibCNIType120(t *testing.T) {
+	// Get the default CNI config
+	l := defaultCNIConfig()
+	// Create a fake cni config directory and file
+	cniDir, confDir := makeFakeCNIConfig(t)
+	defer tearDownCNIConfig(t, cniDir)
+	l.pluginConfDir = confDir
+	// Set the minimum network count as 2 for this test
+	l.networkCount = 2
+	err := l.Load(WithAllConf)
+	assert.NoError(t, err)
+
+	err = l.Status()
+	assert.NoError(t, err)
+
+	mockCNI := &MockCNI{}
+	l.networks[0].cni = mockCNI
+	l.networks[1].cni = mockCNI
+	ipv4, err := types.ParseCIDR("10.0.0.1/24")
+	assert.NoError(t, err)
+	expectedRT := &cnilibrary.RuntimeConf{
+		ContainerID:    "container-id1",
+		NetNS:          "/proc/12345/ns/net",
+		IfName:         "eth0",
+		Args:           [][2]string(nil),
+		CapabilityArgs: map[string]interface{}{},
+	}
+	mockCNI.On("AddNetworkList", l.networks[0].config, expectedRT).Return(&types100.Result{
+		CNIVersion: "1.1.0",
+		Interfaces: []*types100.Interface{
+			{
+				Name: "eth0",
+			},
+		},
+		IPs: []*types100.IPConfig{
+			{
+				Interface: types100.Int(0),
+				Address:   *ipv4,
+				Gateway:   net.ParseIP("10.0.0.255"),
+			},
+		},
+	}, nil)
+	mockCNI.On("DelNetworkList", l.networks[0].config, expectedRT).Return(nil)
+	mockCNI.On("CheckNetworkList", l.networks[0].config, expectedRT).Return(nil)
+	ipv4, err = types.ParseCIDR("10.0.0.2/24")
+	assert.NoError(t, err)
+	l.networks[1].cni = mockCNI
+	expectedRT = &cnilibrary.RuntimeConf{
+		ContainerID:    "container-id1",
+		NetNS:          "/proc/12345/ns/net",
+		IfName:         "eth1",
+		Args:           [][2]string(nil),
+		CapabilityArgs: map[string]interface{}{},
+	}
+	mockCNI.On("GetStatusNetworkList", l.networks[1].config).Return(nil)
+	mockCNI.On("AddNetworkList", l.networks[1].config, expectedRT).Return(&types100.Result{
+		CNIVersion: "1.1.0",
+		Interfaces: []*types100.Interface{
+			{
+				Name: "eth1",
+			},
+		},
+		IPs: []*types100.IPConfig{
+			{
+				Interface: types100.Int(0),
+				Address:   *ipv4,
+				Gateway:   net.ParseIP("10.0.0.2"),
+			},
+		},
+	}, nil)
+	mockCNI.On("DelNetworkList", l.networks[1].config, expectedRT).Return(nil)
+	mockCNI.On("CheckNetworkList", l.networks[1].config, expectedRT).Return(nil)
+	ctx := context.Background()
+	r, err := l.Setup(ctx, "container-id1", "/proc/12345/ns/net")
+	assert.NoError(t, err)
+	assert.Contains(t, r.Interfaces, "eth0")
+	assert.NotNil(t, r.Interfaces["eth0"].IPConfigs)
+	assert.Equal(t, r.Interfaces["eth0"].IPConfigs[0].IP.String(), "10.0.0.1")
+	assert.Contains(t, r.Interfaces, "eth1")
+	assert.NotNil(t, r.Interfaces["eth1"].IPConfigs)
+	assert.Equal(t, r.Interfaces["eth1"].IPConfigs[0].IP.String(), "10.0.0.2")
+
+	err = l.Check(ctx, "container-id1", "/proc/12345/ns/net")
+	assert.NoError(t, err)
+
+	err = l.Remove(ctx, "container-id1", "/proc/12345/ns/net")
+	assert.NoError(t, err)
+}
+
 type MockCNI struct {
 	mock.Mock
 }
 
-func (m *MockCNI) AddNetwork(ctx context.Context, net *cnilibrary.NetworkConfig, rt *cnilibrary.RuntimeConf) (types.Result, error) {
+func (m *MockCNI) AddNetwork(_ context.Context, net *cnilibrary.NetworkConfig, rt *cnilibrary.RuntimeConf) (types.Result, error) {
 	args := m.Called(net, rt)
 	return args.Get(0).(types.Result), args.Error(1)
 }
 
-func (m *MockCNI) DelNetwork(ctx context.Context, net *cnilibrary.NetworkConfig, rt *cnilibrary.RuntimeConf) error {
+func (m *MockCNI) DelNetwork(_ context.Context, net *cnilibrary.NetworkConfig, rt *cnilibrary.RuntimeConf) error {
 	args := m.Called(net, rt)
 	return args.Error(0)
 }
 
-func (m *MockCNI) DelNetworkList(ctx context.Context, net *cnilibrary.NetworkConfigList, rt *cnilibrary.RuntimeConf) error {
+func (m *MockCNI) DelNetworkList(_ context.Context, net *cnilibrary.NetworkConfigList, rt *cnilibrary.RuntimeConf) error {
 	args := m.Called(net, rt)
 	return args.Error(0)
 }
 
-func (m *MockCNI) AddNetworkList(ctx context.Context, net *cnilibrary.NetworkConfigList, rt *cnilibrary.RuntimeConf) (types.Result, error) {
+func (m *MockCNI) AddNetworkList(_ context.Context, net *cnilibrary.NetworkConfigList, rt *cnilibrary.RuntimeConf) (types.Result, error) {
 	args := m.Called(net, rt)
 	return args.Get(0).(types.Result), args.Error(1)
 }
 
-func (m *MockCNI) CheckNetworkList(ctx context.Context, net *cnilibrary.NetworkConfigList, rt *cnilibrary.RuntimeConf) error {
+func (m *MockCNI) CheckNetworkList(_ context.Context, net *cnilibrary.NetworkConfigList, rt *cnilibrary.RuntimeConf) error {
 	args := m.Called(net, rt)
 	return args.Error(0)
 }
 
-func (m *MockCNI) CheckNetwork(ctx context.Context, net *cnilibrary.NetworkConfig, rt *cnilibrary.RuntimeConf) error {
+func (m *MockCNI) CheckNetwork(_ context.Context, net *cnilibrary.NetworkConfig, rt *cnilibrary.RuntimeConf) error {
 	args := m.Called(net, rt)
 	return args.Error(0)
 }
@@ -329,12 +421,12 @@ func (m *MockCNI) GetNetworkCachedResult(net *cnilibrary.NetworkConfig, rt *cnil
 	return args.Get(0).(types.Result), args.Error(1)
 }
 
-func (m *MockCNI) ValidateNetworkList(ctx context.Context, net *cnilibrary.NetworkConfigList) ([]string, error) {
+func (m *MockCNI) ValidateNetworkList(_ context.Context, net *cnilibrary.NetworkConfigList) ([]string, error) {
 	args := m.Called(net)
 	return args.Get(0).([]string), args.Error(1)
 }
 
-func (m *MockCNI) ValidateNetwork(ctx context.Context, net *cnilibrary.NetworkConfig) ([]string, error) {
+func (m *MockCNI) ValidateNetwork(_ context.Context, net *cnilibrary.NetworkConfig) ([]string, error) {
 	args := m.Called(net)
 	return args.Get(0).([]string), args.Error(1)
 }
@@ -347,4 +439,24 @@ func (m *MockCNI) GetNetworkListCachedConfig(net *cnilibrary.NetworkConfigList, 
 func (m *MockCNI) GetNetworkListCachedResult(net *cnilibrary.NetworkConfigList, rt *cnilibrary.RuntimeConf) (types.Result, error) {
 	args := m.Called(net, rt)
 	return args.Get(0).(types.Result), args.Error(1)
+}
+
+func (m *MockCNI) GCNetworkList(_ context.Context, net *cnilibrary.NetworkConfigList, gcargs *cnilibrary.GCArgs) error {
+	args := m.Called(net, gcargs)
+	return args.Error(0)
+}
+
+func (m *MockCNI) GetStatusNetworkList(_ context.Context, net *cnilibrary.NetworkConfigList) error {
+	args := m.Called(net)
+	return args.Error(0)
+}
+
+func (m *MockCNI) GetCachedAttachments(containerID string) ([]*cnilibrary.NetworkAttachment, error) {
+	args := m.Called(containerID)
+	return args.Get(0).([]*cnilibrary.NetworkAttachment), args.Error(1)
+}
+
+func (m *MockCNI) GetVersionInfo(_ context.Context, pluginType string) (version.PluginInfo, error) {
+	args := m.Called(pluginType)
+	return args.Get(0).(version.PluginInfo), args.Error(1)
 }
