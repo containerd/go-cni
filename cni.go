@@ -41,10 +41,12 @@ type CNI interface {
 	Check(ctx context.Context, id string, path string, opts ...NamespaceOpts) error
 	// Load loads the cni network config
 	Load(opts ...Opt) error
-	// Status checks the status of the cni initialization
-	Status() error
+	// Status executes the status verb of the cni plugin
+	Status(ctx context.Context) error
 	// GetConfig returns a copy of the CNI plugin configurations as parsed by CNI
 	GetConfig() *ConfigResult
+	// Ready checks the readiness of the cni system
+	Ready() error
 }
 
 type ConfigResult struct {
@@ -133,8 +135,7 @@ func (c *libcni) Load(opts ...Opt) error {
 	return nil
 }
 
-// Status returns the status of CNI initialization.
-func (c *libcni) Status() error {
+func (c *libcni) Ready() error {
 	c.RLock()
 	defer c.RUnlock()
 	if len(c.networks) < c.networkCount {
@@ -153,7 +154,7 @@ func (c *libcni) Networks() []*Network {
 
 // Setup setups the network in the namespace and returns a Result
 func (c *libcni) Setup(ctx context.Context, id string, path string, opts ...NamespaceOpts) (*Result, error) {
-	if err := c.Status(); err != nil {
+	if err := c.Ready(); err != nil {
 		return nil, err
 	}
 	ns, err := newNamespace(id, path, opts...)
@@ -169,7 +170,7 @@ func (c *libcni) Setup(ctx context.Context, id string, path string, opts ...Name
 
 // SetupSerially setups the network in the namespace and returns a Result
 func (c *libcni) SetupSerially(ctx context.Context, id string, path string, opts ...NamespaceOpts) (*Result, error) {
-	if err := c.Status(); err != nil {
+	if err := c.Ready(); err != nil {
 		return nil, err
 	}
 	ns, err := newNamespace(id, path, opts...)
@@ -232,7 +233,7 @@ func (c *libcni) attachNetworks(ctx context.Context, ns *Namespace) ([]*types100
 
 // Remove removes the network config from the namespace
 func (c *libcni) Remove(ctx context.Context, id string, path string, opts ...NamespaceOpts) error {
-	if err := c.Status(); err != nil {
+	if err := c.Ready(); err != nil {
 		return err
 	}
 	ns, err := newNamespace(id, path, opts...)
@@ -260,7 +261,7 @@ func (c *libcni) Remove(ctx context.Context, id string, path string, opts ...Nam
 
 // Check checks if the network is still in desired state
 func (c *libcni) Check(ctx context.Context, id string, path string, opts ...NamespaceOpts) error {
-	if err := c.Status(); err != nil {
+	if err := c.Ready(); err != nil {
 		return err
 	}
 	ns, err := newNamespace(id, path, opts...)
@@ -309,4 +310,22 @@ func (c *libcni) GetConfig() *ConfigResult {
 
 func (c *libcni) reset() {
 	c.networks = nil
+}
+
+func (c *libcni) Status(ctx context.Context) error {
+	err := c.Ready()
+
+	if err != nil {
+		return err
+	}
+
+	for _, network := range c.Networks() {
+		err = network.Status(ctx)
+
+		if err != nil {
+			return err
+		}
+	}
+	
+	return nil
 }

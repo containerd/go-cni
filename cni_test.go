@@ -45,7 +45,7 @@ func TestLibCNIType020(t *testing.T) {
 	err := l.Load(WithAllConf)
 	assert.NoError(t, err)
 
-	err = l.Status()
+	err = l.Status(context.TODO())
 	assert.NoError(t, err)
 
 	mockCNI := &MockCNI{}
@@ -121,7 +121,7 @@ func TestLibCNIType040(t *testing.T) {
 	err := l.Load(WithAllConf)
 	assert.NoError(t, err)
 
-	err = l.Status()
+	err = l.Status(context.TODO())
 	assert.NoError(t, err)
 
 	mockCNI := &MockCNI{}
@@ -209,7 +209,7 @@ func TestLibCNIType100(t *testing.T) {
 	err := l.Load(WithAllConf)
 	assert.NoError(t, err)
 
-	err = l.Status()
+	err = l.Status(context.TODO())
 	assert.NoError(t, err)
 
 	mockCNI := &MockCNI{}
@@ -347,4 +347,19 @@ func (m *MockCNI) GetNetworkListCachedConfig(net *cnilibrary.NetworkConfigList, 
 func (m *MockCNI) GetNetworkListCachedResult(net *cnilibrary.NetworkConfigList, rt *cnilibrary.RuntimeConf) (types.Result, error) {
 	args := m.Called(net, rt)
 	return args.Get(0).(types.Result), args.Error(1)
+}
+
+func (m * MockCNI) GCNetworkList(ctx context.Context, net *cnilibrary.NetworkConfigList, gcargs *cnilibrary.GCArgs) error {
+	args := m.Called(net, gcargs)
+	return args.Error(0)
+}
+
+func (m *MockCNI) GetStatusNetworkList(ctx context.Context, net *cnilibrary.NetworkConfigList) error {
+	args := m.Called(net)
+	return args.Error(0)
+}
+
+func (m *MockCNI) GetCachedAttachments(containerID string) ([]*cnilibrary.NetworkAttachment, error) {
+	args := m.Called(containerID)
+	return args.Get(0).([]*cnilibrary.NetworkAttachment), args.Error(1)
 }
