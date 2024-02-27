@@ -45,7 +45,7 @@ func TestLibCNIType020(t *testing.T) {
 	err := l.Load(WithAllConf)
 	assert.NoError(t, err)
 
-	err = l.Status(context.TODO())
+	err = l.Ready()
 	assert.NoError(t, err)
 
 	mockCNI := &MockCNI{}
@@ -121,7 +121,7 @@ func TestLibCNIType040(t *testing.T) {
 	err := l.Load(WithAllConf)
 	assert.NoError(t, err)
 
-	err = l.Status(context.TODO())
+	err = l.Ready()
 	assert.NoError(t, err)
 
 	mockCNI := &MockCNI{}
@@ -209,7 +209,7 @@ func TestLibCNIType100(t *testing.T) {
 	err := l.Load(WithAllConf)
 	assert.NoError(t, err)
 
-	err = l.Status(context.TODO())
+	err = l.Ready()
 	assert.NoError(t, err)
 
 	mockCNI := &MockCNI{}

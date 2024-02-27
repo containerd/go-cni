@@ -42,7 +42,7 @@ type CNI interface {
 	// Load loads the cni network config
 	Load(opts ...Opt) error
 	// Status executes the status verb of the cni plugin
-	Status(ctx context.Context) error
+	Status(ctx context.Context) ([]*NetworkStatus, error)
 	// GetConfig returns a copy of the CNI plugin configurations as parsed by CNI
 	GetConfig() *ConfigResult
 	// Ready checks the readiness of the cni system
@@ -312,20 +312,26 @@ func (c *libcni) reset() {
 	c.networks = nil
 }
 
-func (c *libcni) Status(ctx context.Context) error {
+// Status returns a slice of network statuses
+func (c *libcni) Status(ctx context.Context) ([]*NetworkStatus, error) {
 	err := c.Ready()
 
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	var networks []*NetworkStatus
 
 	for _, network := range c.Networks() {
-		err = network.Status(ctx)
-
-		if err != nil {
-			return err
+		if network.config.Name == "cni-loopback" {
+			continue
 		}
+
+		networks = append(networks, &NetworkStatus{
+			Network: network,
+			Status:  network.Status(ctx),
+		})
 	}
 	
-	return nil
+	return networks, nil
 }
