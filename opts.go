@@ -19,6 +19,7 @@ package cni
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -94,6 +95,12 @@ func WithLoNetwork(c *libcni) error {
 }]
 }`))
 
+	err := checkPluginExists(c, loConfig)
+
+	if err != nil {
+		return err
+	}
+
 	c.networks = append(c.networks, &Network{
 		cni:    c.cniConfig,
 		config: loConfig,
@@ -120,6 +127,13 @@ func WithConfIndex(bytes []byte, index int) Opt {
 		if err != nil {
 			return err
 		}
+
+		err = checkPluginExists(c, confList)
+
+		if err != nil {
+			return err
+		}
+
 		c.networks = append(c.networks, &Network{
 			cni:    c.cniConfig,
 			config: confList,
@@ -143,6 +157,13 @@ func WithConfFile(fileName string) Opt {
 		if err != nil {
 			return err
 		}
+
+		err = checkPluginExists(c, confList)
+
+		if err != nil {
+			return err
+		}
+
 		c.networks = append(c.networks, &Network{
 			cni:    c.cniConfig,
 			config: confList,
@@ -160,6 +181,13 @@ func WithConfListBytes(bytes []byte) Opt {
 		if err != nil {
 			return err
 		}
+
+		err = checkPluginExists(c, confList)
+
+		if err != nil {
+			return err
+		}
+
 		i := len(c.networks)
 		c.networks = append(c.networks, &Network{
 			cni:    c.cniConfig,
@@ -179,6 +207,13 @@ func WithConfListFile(fileName string) Opt {
 		if err != nil {
 			return err
 		}
+
+		err = checkPluginExists(c, confList)
+
+		if err != nil {
+			return err
+		}
+
 		i := len(c.networks)
 		c.networks = append(c.networks, &Network{
 			cni:    c.cniConfig,
@@ -253,13 +288,20 @@ func loadFromConfDir(c *libcni, max int) error {
 		}
 		if len(confList.Plugins) == 0 {
 			return fmt.Errorf("CNI config list in config file %s has no networks, skipping: %w", confFile, ErrInvalidConfig)
-
 		}
+
+		err := checkPluginExists(c, confList)
+
+		if err != nil {
+			return err
+		}
+
 		networks = append(networks, &Network{
 			cni:    c.cniConfig,
 			config: confList,
 			ifName: getIfName(c.prefix, i),
 		})
+
 		i++
 		if i == max {
 			break
@@ -270,4 +312,38 @@ func loadFromConfDir(c *libcni, max int) error {
 	}
 	c.networks = append(c.networks, networks...)
 	return nil
+}
+
+func checkPluginExists(c *libcni, confList *cnilibrary.NetworkConfigList) error {
+	missing := make(map[string]interface{})
+	for _, plug := range confList.Plugins {
+		plugin := plug.Network.Type
+		for _, dir := range c.pluginDirs {
+			if !fileExistsInDir(dir, plugin) {
+				missing[plugin] = plugin
+			} else {
+				delete(missing, plugin)
+				break
+			}
+		}
+	}
+
+	if len(missing) > 0 {
+		var plugins []string
+		for k := range missing {
+			plugins = append(plugins, k)
+		}
+
+		return fmt.Errorf("unable to find cni plugins %s in directories %s: %v",
+			strings.Join(plugins, ", "), strings.Join(c.pluginDirs, ", "), ErrCNIPluginNotFound)
+	}
+
+	return nil
+}
+
+// FileExistsInDir checks if a file exists in a specific directory
+func fileExistsInDir(directory, filename string) bool {
+	filePath := filepath.Join(directory, filename)
+	_, err := os.Stat(filePath)
+	return !os.IsExist(err)
 }

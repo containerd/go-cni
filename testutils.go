@@ -43,6 +43,12 @@ func makeFakeCNIConfig(t *testing.T) (string, string) {
 		t.Fatalf("Failed to create network config dir: %v", err)
 	}
 
+	cniPluginDir := path.Join(cniDir, "bin")
+	err = os.MkdirAll(cniPluginDir, 0777)
+	if err != nil {
+		t.Fatalf("Failed to create plugin dir: %v", err)
+	}
+
 	networkConfig1 := path.Join(cniConfDir, "mocknetwork1.conf")
 	f1, err := os.Create(networkConfig1)
 	if err != nil {
@@ -53,6 +59,12 @@ func makeFakeCNIConfig(t *testing.T) (string, string) {
 	if err != nil {
 		t.Fatalf("Failed to create network config %v: %v", f2, err)
 	}
+
+	file, err := os.Create(path.Join(cniPluginDir, "fakecni"))
+	if err != nil {
+		t.Fatalf("Error creating file: %v", err)
+	}
+	defer file.Close()
 
 	cfg1 := fmt.Sprintf(`{ "name": "%s", "type": "%s", "capabilities": {"portMappings": true}  }`, "plugin1", "fakecni")
 	_, err = f1.WriteString(cfg1)
@@ -66,7 +78,7 @@ func makeFakeCNIConfig(t *testing.T) (string, string) {
 		t.Fatalf("Failed to write network config file %v: %v", f2, err)
 	}
 	f2.Close()
-	return cniDir, cniConfDir
+	return cniPluginDir, cniConfDir
 }
 
 func tearDownCNIConfig(t *testing.T, confDir string) {
