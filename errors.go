@@ -27,8 +27,6 @@ var (
 	ErrRead                 = errors.New("failed to read config file")
 	ErrInvalidResult        = errors.New("invalid result")
 	ErrLoad                 = errors.New("failed to load cni config")
-	ErrCNIPluginNotFound    = errors.New("cni plugin not found")
-	ErrCNIPluginDirNotFound = errors.New("cni plugin directory not found")
 )
 
 // IsCNINotInitialized returns true if the error is due to cni config not being initialized

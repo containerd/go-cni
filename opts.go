@@ -335,7 +335,7 @@ func checkPluginExists(c *libcni, confList *cnilibrary.NetworkConfigList) error 
 		}
 
 		return fmt.Errorf("unable to find cni plugins %s in directories %s: %v",
-			strings.Join(plugins, ", "), strings.Join(c.pluginDirs, ", "), ErrCNIPluginNotFound)
+			strings.Join(plugins, ", "), strings.Join(c.pluginDirs, ", "), ErrInvalidConfig)
 	}
 
 	return nil
