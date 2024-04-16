@@ -7,7 +7,7 @@ toolchain go1.21.5
 require (
 	github.com/containerd/continuity v0.2.2
 	github.com/containerd/go-cni v0.0.0-00010101000000-000000000000
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.9.0
 )
 
 require (
