@@ -1,6 +1,6 @@
 module github.com/containerd/go-cni/integration
 
-go 1.17
+go 1.21
 
 require (
 	github.com/containerd/continuity v0.2.2
