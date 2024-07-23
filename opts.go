@@ -324,5 +324,5 @@ func isValidSize(filepath string, maxSize int64) (bool, error) {
 		return false, err
 	}
 
-	return fileInfo.Size() < maxSize, nil
+	return fileInfo.Size() <= maxSize, nil
 }
