@@ -27,6 +27,8 @@ import (
 	"github.com/containernetworking/cni/pkg/version"
 )
 
+const MaxFileSize = 2 * 1024 * 1024 // 2 Megabytes
+
 // Opt sets options for a CNI instance
 type Opt func(c *libcni) error
 
@@ -83,6 +85,13 @@ func WithMinNetworkCount(count int) Opt {
 	}
 }
 
+func WithMaxNetworkConfigurationSize(max int64) Opt {
+	return func(c *libcni) error {
+		c.cniConfigSizeMax = max
+		return nil
+	}
+}
+
 // WithLoNetwork can be used to load the loopback
 // network config.
 func WithLoNetwork(c *libcni) error {
@@ -134,6 +143,16 @@ func WithConfIndex(bytes []byte, index int) Opt {
 // with path only.
 func WithConfFile(fileName string) Opt {
 	return func(c *libcni) error {
+		val, err := isValidSize(fileName, c.cniConfigSizeMax)
+
+		if err != nil {
+			return fmt.Errorf("unknown error occurred when trying to get file size of %s", fileName)
+		}
+
+		if !val {
+			return fmt.Errorf("CNI config in %s exceeded max size of %d", fileName, c.cniConfigSizeMax)
+		}
+
 		conf, err := cnilibrary.ConfFromFile(fileName)
 		if err != nil {
 			return err
@@ -175,6 +194,16 @@ func WithConfListBytes(bytes []byte) Opt {
 // with path only.
 func WithConfListFile(fileName string) Opt {
 	return func(c *libcni) error {
+		val, err := isValidSize(fileName, c.cniConfigSizeMax)
+
+		if err != nil {
+			return fmt.Errorf("unknown error occurred when trying to get file size of %s", fileName)
+		}
+
+		if !val {
+			return fmt.Errorf("CNI config in %s exceeded max size of %d", fileName, c.cniConfigSizeMax)
+		}
+
 		confList, err := cnilibrary.ConfListFromFile(fileName)
 		if err != nil {
 			return err
@@ -229,6 +258,16 @@ func loadFromConfDir(c *libcni, max int) error {
 	i := 0
 	var networks []*Network
 	for _, confFile := range files {
+		val, err := isValidSize(confFile, c.cniConfigSizeMax)
+
+		if err != nil {
+			return fmt.Errorf("unknown error occurred when trying to get file size of %s", confFile)
+		}
+
+		if !val {
+			return fmt.Errorf("CNI config in %s exceeded max size of %d", confFile, c.cniConfigSizeMax)
+		}
+
 		var confList *cnilibrary.NetworkConfigList
 		if strings.HasSuffix(confFile, ".conflist") {
 			confList, err = cnilibrary.ConfListFromFile(confFile)
@@ -270,4 +309,20 @@ func loadFromConfDir(c *libcni, max int) error {
 	}
 	c.networks = append(c.networks, networks...)
 	return nil
+}
+
+func isValidSize(filepath string, maxSize int64) (bool, error) {
+	file, err := os.Open(filepath)
+
+	if err != nil {
+		return false, err
+	}
+
+	fileInfo, err := file.Stat()
+
+	if err != nil {
+		return false, err
+	}
+
+	return fileInfo.Size() < maxSize, nil
 }

@@ -81,6 +81,7 @@ type libcni struct {
 	networkCount int // minimum network plugin configurations needed to initialize cni
 	networks     []*Network
 	sync.RWMutex
+	cniConfigSizeMax int64
 }
 
 func defaultCNIConfig() *libcni {
@@ -100,7 +101,8 @@ func defaultCNIConfig() *libcni {
 				PluginDecoder: version.PluginDecoder{},
 			},
 		),
-		networkCount: 1,
+		networkCount:     1,
+		cniConfigSizeMax: MaxFileSize,
 	}
 }
 
