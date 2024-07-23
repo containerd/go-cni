@@ -102,7 +102,7 @@ func defaultCNIConfig() *libcni {
 			},
 		),
 		networkCount:     1,
-		cniConfigSizeMax: MaxFileSize,
+		cniConfigSizeMax: MaxFileSizeDefault,
 	}
 }
 
