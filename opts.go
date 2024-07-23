@@ -27,7 +27,7 @@ import (
 	"github.com/containernetworking/cni/pkg/version"
 )
 
-const MaxFileSize = 2 * 1024 * 1024 // 2 Megabytes
+const MaxFileSizeDefault = 2 * 1024 * 1024 // 2 Megabytes
 
 // Opt sets options for a CNI instance
 type Opt func(c *libcni) error
