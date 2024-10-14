@@ -342,6 +342,7 @@ func TestLibCNIType120(t *testing.T) {
 		Args:           [][2]string(nil),
 		CapabilityArgs: map[string]interface{}{},
 	}
+	mockCNI.On("GetStatusNetworkList", l.networks[1].config).Return(nil)
 	mockCNI.On("AddNetworkList", l.networks[1].config, expectedRT).Return(&types100.Result{
 		CNIVersion: "1.1.0",
 		Interfaces: []*types100.Interface{

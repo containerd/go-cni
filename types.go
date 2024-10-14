@@ -60,3 +60,8 @@ type DNS struct {
 	// List of DNS options.
 	Options []string
 }
+
+type NetworkStatus struct {
+	Network *Network
+	Status  error
+}
