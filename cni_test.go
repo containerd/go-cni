@@ -315,6 +315,7 @@ func TestLibCNIType120(t *testing.T) {
 		Args:           [][2]string(nil),
 		CapabilityArgs: map[string]interface{}{},
 	}
+	mockCNI.On("GetStatusNetworkList", l.networks[0].config).Return(nil)
 	mockCNI.On("AddNetworkList", l.networks[0].config, expectedRT).Return(&types100.Result{
 		CNIVersion: "1.1.0",
 		Interfaces: []*types100.Interface{
@@ -375,6 +376,12 @@ func TestLibCNIType120(t *testing.T) {
 
 	err = l.Remove(ctx, "container-id1", "/proc/12345/ns/net")
 	assert.NoError(t, err)
+
+	statuses, err := l.StatusDetail(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, statuses, 2)
+	assert.Nil(t, statuses[0].Status)
+	assert.Nil(t, statuses[1].Status)
 }
 
 type MockCNI struct {
