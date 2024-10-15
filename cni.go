@@ -315,9 +315,7 @@ func (c *libcni) reset() {
 
 // StatusDetail returns a slice of network statuses
 func (c *libcni) StatusDetail(ctx context.Context) ([]*NetworkStatus, error) {
-	err := c.Status()
-
-	if err != nil {
+	if err := c.Status(); err != nil {
 		return nil, err
 	}
 
