@@ -30,6 +30,8 @@ import (
 	"github.com/containernetworking/cni/pkg/version"
 )
 
+const LoopbackNetworkName = "cni-loopback"
+
 type CNI interface {
 	// Setup setup the network for the namespace
 	Setup(ctx context.Context, id string, path string, opts ...NamespaceOpts) (*Result, error)
@@ -322,7 +324,9 @@ func (c *libcni) StatusDetail(ctx context.Context) ([]*NetworkStatus, error) {
 	var networks []*NetworkStatus
 
 	for _, network := range c.Networks() {
-		if network.config.Name == "cni-loopback" {
+		// Skip checking the status of the loopback network. It would have
+		// always returned the same thing, and is being deprecated anyway.
+		if network.config.Name == LoopbackNetworkName {
 			continue
 		}
 
