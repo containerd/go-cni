@@ -321,7 +321,7 @@ func (c *libcni) StatusDetail(ctx context.Context) ([]*NetworkStatus, error) {
 		return nil, err
 	}
 
-	var networks []*NetworkStatus
+	var networkStatuses []*NetworkStatus
 
 	for _, network := range c.Networks() {
 		// Skip checking the status of the loopback network. It would have
@@ -330,11 +330,11 @@ func (c *libcni) StatusDetail(ctx context.Context) ([]*NetworkStatus, error) {
 			continue
 		}
 
-		networks = append(networks, &NetworkStatus{
+		networkStatuses = append(networkStatuses, &NetworkStatus{
 			Network: network,
 			Status:  network.Status(ctx),
 		})
 	}
 
-	return networks, nil
+	return networkStatuses, nil
 }
