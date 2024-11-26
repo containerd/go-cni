@@ -45,6 +45,10 @@ func (n *Network) Check(ctx context.Context, ns *Namespace) error {
 	return n.cni.CheckNetworkList(ctx, n.config, ns.config(n.ifName))
 }
 
+func (n *Network) Status(ctx context.Context) error {
+	return n.cni.GetStatusNetworkList(ctx, n.config)
+}
+
 type Namespace struct {
 	id             string
 	path           string
