@@ -35,6 +35,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"net"
 	"os"
 	"path"
 	"runtime"
@@ -46,6 +47,7 @@ import (
 	"github.com/containerd/continuity/testutil"
 	"github.com/containerd/go-cni"
 	"github.com/stretchr/testify/assert"
+	"github.com/vishvananda/netlink"
 )
 
 var (
@@ -304,6 +306,25 @@ func TestBasicSetupAndRemovePluginWithoutVersion(t *testing.T) {
 			"[%v] teardown network interfaces for namespace %v", idx, nsPath,
 		)
 	}
+}
+
+// TestLoopbackStatus validates whether the loopback interface state is UP.
+func TestLoopbackStatus(t *testing.T) {
+	t.Log("Checking loopback interface status")
+	up, err := isLoInterfaceUp()
+	assert.NoError(t, err, "could not check lo interface status")
+
+	t.Logf("loopback interface status is %v", map[bool]string{true: "UP", false: "DOWN"}[up])
+	assert.True(t, up)
+}
+
+// isLoInterfaceUp returns true if the loopback interface status is UP, otherwise false.
+func isLoInterfaceUp() (bool, error) {
+	link, err := netlink.LinkByName("lo")
+	if err != nil {
+		return false, fmt.Errorf("could not find interface lo: %w", err)
+	}
+	return link.Attrs().Flags&net.FlagUp != 0, nil
 }
 
 // createNetNS returns temp netns path.
