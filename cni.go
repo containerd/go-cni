@@ -165,8 +165,6 @@ func (c *libcni) Setup(ctx context.Context, id string, path string, opts ...Name
 	if err := c.ready(); err != nil {
 		return nil, err
 	}
-	c.RLock()
-	defer c.RUnlock()
 	ns, err := newNamespace(id, path, opts...)
 	if err != nil {
 		return nil, err
@@ -183,8 +181,6 @@ func (c *libcni) SetupSerially(ctx context.Context, id string, path string, opts
 	if err := c.ready(); err != nil {
 		return nil, err
 	}
-	c.RLock()
-	defer c.RUnlock()
 	ns, err := newNamespace(id, path, opts...)
 	if err != nil {
 		return nil, err
@@ -248,8 +244,6 @@ func (c *libcni) Remove(ctx context.Context, id string, path string, opts ...Nam
 	if err := c.ready(); err != nil {
 		return err
 	}
-	c.RLock()
-	defer c.RUnlock()
 	ns, err := newNamespace(id, path, opts...)
 	if err != nil {
 		return err
@@ -278,8 +272,6 @@ func (c *libcni) Check(ctx context.Context, id string, path string, opts ...Name
 	if err := c.ready(); err != nil {
 		return err
 	}
-	c.RLock()
-	defer c.RUnlock()
 	ns, err := newNamespace(id, path, opts...)
 	if err != nil {
 		return err
