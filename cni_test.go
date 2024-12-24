@@ -35,12 +35,13 @@ import (
 // TestLibCNIType020 tests the cni version 0.2.0 plugin
 // config and parses the result into structured data
 func TestLibCNIType020(t *testing.T) {
+	t.Parallel()
+
 	// Get the default CNI config
 	l := defaultCNIConfig()
 
 	// Create a fake cni config directory and file
-	cniDir, confDir := makeFakeCNIConfig(t)
-	defer tearDownCNIConfig(t, cniDir)
+	_, confDir := makeFakeCNIConfig(t)
 	l.pluginConfDir = confDir
 	// Set the minimum network count as 2 for this test
 	l.networkCount = 2
@@ -112,11 +113,12 @@ func TestLibCNIType020(t *testing.T) {
 // TestLibCNIType040 tests the cni version 0.4.0 plugin
 // config and parses the result into structured data
 func TestLibCNIType040(t *testing.T) {
+	t.Parallel()
+
 	// Get the default CNI config
 	l := defaultCNIConfig()
 	// Create a fake cni config directory and file
-	cniDir, confDir := makeFakeCNIConfig(t)
-	defer tearDownCNIConfig(t, cniDir)
+	_, confDir := makeFakeCNIConfig(t)
 	l.pluginConfDir = confDir
 	// Set the minimum network count as 2 for this test
 	l.networkCount = 2
@@ -200,11 +202,12 @@ func TestLibCNIType040(t *testing.T) {
 // TestLibCNIType100 tests the cni version 1.0.0 plugin
 // config and parses the result into structured data
 func TestLibCNIType100(t *testing.T) {
+	t.Parallel()
+
 	// Get the default CNI config
 	l := defaultCNIConfig()
 	// Create a fake cni config directory and file
-	cniDir, confDir := makeFakeCNIConfig(t)
-	defer tearDownCNIConfig(t, cniDir)
+	_, confDir := makeFakeCNIConfig(t)
 	l.pluginConfDir = confDir
 	// Set the minimum network count as 2 for this test
 	l.networkCount = 2
@@ -290,11 +293,12 @@ func TestLibCNIType100(t *testing.T) {
 // TestLibCNIType120 tests the cni version 1.1.0 plugin
 // config and parses the result into structured data
 func TestLibCNIType120(t *testing.T) {
+	t.Parallel()
+
 	// Get the default CNI config
 	l := defaultCNIConfig()
 	// Create a fake cni config directory and file
-	cniDir, confDir := buildFakeConfig(t)
-	defer tearDownCNIConfig(t, cniDir)
+	_, confDir := buildFakeConfig(t)
 	l.pluginConfDir = confDir
 	// Set the minimum network count as 2 for this test
 	l.networkCount = 2
@@ -382,11 +386,12 @@ func TestLibCNIType120(t *testing.T) {
 }
 
 func TestLibCNIType120FailStatus(t *testing.T) {
+	t.Parallel()
+
 	// Get the default CNI config
 	l := defaultCNIConfig()
 	// Create a fake cni config directory and file
-	cniDir, confDir := buildFakeConfig(t)
-	defer tearDownCNIConfig(t, cniDir)
+	_, confDir := buildFakeConfig(t)
 	l.pluginConfDir = confDir
 	// Set the minimum network count as 2 for this test
 	l.networkCount = 2
