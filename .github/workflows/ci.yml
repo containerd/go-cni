@@ -29,11 +29,11 @@ jobs:
           path: src/github.com/containerd/go-cni
           fetch-depth: 25
 
-      - uses: containerd/project-checks@v1.1.0
+      - uses: containerd/project-checks@v1.2.2
         with:
           working-directory: src/github.com/containerd/go-cni
 
-      - uses: containerd/project-checks@v1.1.0
+      - uses: containerd/project-checks@v1.2.2
         with:
           working-directory: src/github.com/containerd/go-cni/integration
 
@@ -64,7 +64,7 @@ jobs:
 
       - uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.61.0
+          version: v1.64.8
           working-directory: src/github.com/containerd/go-cni
 
   tests:
