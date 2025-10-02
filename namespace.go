@@ -20,6 +20,7 @@ import (
 	"context"
 
 	cnilibrary "github.com/containernetworking/cni/libcni"
+	"github.com/containernetworking/cni/pkg/types"
 	types100 "github.com/containernetworking/cni/pkg/types/100"
 )
 
@@ -43,6 +44,17 @@ func (n *Network) Remove(ctx context.Context, ns *Namespace) error {
 
 func (n *Network) Check(ctx context.Context, ns *Namespace) error {
 	return n.cni.CheckNetworkList(ctx, n.config, ns.config(n.ifName))
+}
+
+func (n *Network) GC(ctx context.Context, ids []string) error {
+	var args cnilibrary.GCArgs
+	for _, id := range ids {
+		args.ValidAttachments = append(args.ValidAttachments, types.GCAttachment{
+			ContainerID: id,
+			IfName:      n.ifName,
+		})
+	}
+	return n.cni.GCNetworkList(ctx, n.config, &args)
 }
 
 type Namespace struct {
