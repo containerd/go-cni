@@ -84,6 +84,21 @@ func main() {
 }
 ```
 
+## Defaults
+
+`go-cni` has built-in defaults when `WithPluginDir` / `WithPluginConfDir` are not set:
+
+- non-Windows:
+  - plugin dir: `/opt/cni/bin`
+  - config dir: `/etc/cni/net.d`
+- Windows:
+  - plugin dir: `C:\Program Files\containerd\cni\bin`
+  - config dir: `C:\Program Files\containerd\cni\conf`
+
+For rootless or non-standard environments (for example Darwin-based setups),
+pass explicit directories via `WithPluginDir` and `WithPluginConfDir` instead
+of relying on system-wide defaults.
+
 ## Project details
 
 The go-cni is a containerd sub-project, licensed under the [Apache 2.0 license](./LICENSE).
