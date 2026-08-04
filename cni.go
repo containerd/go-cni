@@ -143,9 +143,16 @@ func (c *libcni) Status() error {
 	if err := c.ready(); err != nil {
 		return err
 	}
+
 	// STATUS is only called for CNI Version 1.1.0 or greater. It is ignored for previous versions.
 	for _, v := range c.networks {
-		err := c.cniConfig.GetStatusNetworkList(context.Background(), v.config)
+		err := checkPluginExists(c, v.config)
+
+		if err != nil {
+			return err
+		}
+
+		err = c.cniConfig.GetStatusNetworkList(context.Background(), v.config)
 
 		if err != nil {
 			return err
