@@ -39,8 +39,27 @@ func WithInterfacePrefix(prefix string) Opt {
 	}
 }
 
+// WithPluginDirsAndCacheDir can be used to set the locations of
+// the cni plugin binaries and cni cache dir
+// cacheDir: to use default provided in libcni set value to empty string
+func WithPluginDirsAndCacheDir(pluginDirs []string, cacheDir string) Opt {
+	return func(c *libcni) error {
+		c.pluginDirs = pluginDirs
+		c.cniConfig = cnilibrary.NewCNIConfigWithCacheDir(
+			pluginDirs,
+			cacheDir,
+			&invoke.DefaultExec{
+				RawExec:       &invoke.RawExec{Stderr: os.Stderr},
+				PluginDecoder: version.PluginDecoder{},
+			},
+		)
+		return nil
+	}
+}
+
 // WithPluginDir can be used to set the locations of
 // the cni plugin binaries
+// Deprecated: use WithPluginDirsAndCacheDir instead
 func WithPluginDir(dirs []string) Opt {
 	return func(c *libcni) error {
 		c.pluginDirs = dirs
