@@ -18,6 +18,7 @@ package cni
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -45,6 +46,8 @@ type CNI interface {
 	Status() error
 	// GetConfig returns a copy of the CNI plugin configurations as parsed by CNI
 	GetConfig() *ConfigResult
+	// GC cleans up stale resources provided a list of known valid attachments
+	GC(ctx context.Context, ids []string) error
 }
 
 type ConfigResult struct {
@@ -337,4 +340,19 @@ func (c *libcni) ready() error {
 	}
 
 	return nil
+}
+
+func (c *libcni) GC(ctx context.Context, ids []string) error {
+	c.Lock()
+	defer c.Unlock()
+	var err error
+	for _, network := range c.networks {
+		if network.config.DisableGC {
+			continue
+		}
+		if gcerr := network.GC(ctx, ids); gcerr != nil {
+			err = errors.Join(err, gcerr)
+		}
+	}
+	return err
 }
