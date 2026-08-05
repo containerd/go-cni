@@ -246,7 +246,9 @@ func (c *libcni) attachNetworks(ctx context.Context, ns *Namespace) ([]*types100
 	return results, firstError
 }
 
-// Remove removes the network config from the namespace
+// Remove removes the network config from the namespace. Networks are torn
+// down in reverse of the order they were configured, as expected by the CNI
+// spec.
 func (c *libcni) Remove(ctx context.Context, id string, path string, opts ...NamespaceOpts) error {
 	c.RLock()
 	defer c.RUnlock()
@@ -257,7 +259,8 @@ func (c *libcni) Remove(ctx context.Context, id string, path string, opts ...Nam
 	if err != nil {
 		return err
 	}
-	for _, network := range c.networks {
+	for i := len(c.networks) - 1; i >= 0; i-- {
+		network := c.networks[i]
 		if err := network.Remove(ctx, ns); err != nil {
 			// Based on CNI spec v0.7.0, empty network namespace is allowed to
 			// do best effort cleanup. However, it is not handled consistently

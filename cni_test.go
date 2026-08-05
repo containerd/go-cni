@@ -385,6 +385,51 @@ func TestLibCNIType120(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// TestRemoveReverseOrder verifies that Remove tears down networks in reverse
+// of the order they were configured.
+func TestRemoveReverseOrder(t *testing.T) {
+	t.Parallel()
+
+	l := defaultCNIConfig()
+	_, confDir := buildFakeConfig(t)
+	l.pluginConfDir = confDir
+	l.networkCount = 2
+	err := l.Load(WithLoNetwork, WithDefaultConf)
+	assert.NoError(t, err)
+
+	mockCNI := &MockCNI{}
+	l.networks[0].cni = mockCNI
+	l.networks[1].cni = mockCNI
+
+	loRT := &cnilibrary.RuntimeConf{
+		ContainerID:    "container-id1",
+		NetNS:          "/proc/12345/ns/net",
+		IfName:         "lo",
+		Args:           [][2]string(nil),
+		CapabilityArgs: map[string]interface{}{},
+	}
+	eth0RT := &cnilibrary.RuntimeConf{
+		ContainerID:    "container-id1",
+		NetNS:          "/proc/12345/ns/net",
+		IfName:         "eth0",
+		Args:           [][2]string(nil),
+		CapabilityArgs: map[string]interface{}{},
+	}
+	mockCNI.On("DelNetworkList", l.networks[0].config, loRT).Return(nil)
+	mockCNI.On("DelNetworkList", l.networks[1].config, eth0RT).Return(nil)
+
+	err = l.Remove(context.Background(), "container-id1", "/proc/12345/ns/net")
+	assert.NoError(t, err)
+
+	var ifNames []string
+	for _, c := range mockCNI.Calls {
+		if c.Method == "DelNetworkList" {
+			ifNames = append(ifNames, c.Arguments.Get(1).(*cnilibrary.RuntimeConf).IfName)
+		}
+	}
+	assert.Equal(t, []string{"eth0", "lo"}, ifNames)
+}
+
 func TestLibCNIType120FailStatus(t *testing.T) {
 	t.Parallel()
 
