@@ -63,6 +63,7 @@ func buildFakeConfig(t *testing.T) (string, string) {
 	{
 	"cniVersion": "1.1.0",
 	"name": "containerd-net",
+	"disableGC": true,
 	"plugins": [
 		{
 		"type": "bridge",

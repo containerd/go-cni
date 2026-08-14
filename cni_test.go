@@ -327,6 +327,17 @@ func TestLibCNIType120(t *testing.T) {
 		CapabilityArgs: map[string]interface{}{},
 	}
 
+	gcArgs := func(c *cnilibrary.RuntimeConf) *cnilibrary.GCArgs {
+		return &cnilibrary.GCArgs{
+			ValidAttachments: []types.GCAttachment{
+				{
+					ContainerID: c.ContainerID,
+					IfName:      c.IfName,
+				},
+			},
+		}
+	}
+
 	// mock for loopback
 	mockCNI.On("GetStatusNetworkList", l.networks[0].config).Return(nil)
 	mockCNI.On("AddNetworkList", l.networks[0].config, loRT).Return(&types040.Result{
@@ -347,6 +358,7 @@ func TestLibCNIType120(t *testing.T) {
 	}, nil)
 	mockCNI.On("DelNetworkList", l.networks[0].config, loRT).Return(nil)
 	mockCNI.On("CheckNetworkList", l.networks[0].config, loRT).Return(nil)
+	mockCNI.On("GCNetworkList", l.networks[0].config, gcArgs(loRT)).Return(nil)
 
 	// mock for primary cni
 	mockCNI.On("GetStatusNetworkList", l.networks[1].config).Return(nil)
@@ -382,6 +394,9 @@ func TestLibCNIType120(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = l.Remove(ctx, "container-id1", "/proc/12345/ns/net")
+	assert.NoError(t, err)
+
+	err = l.GC(ctx, []string{"container-id1"})
 	assert.NoError(t, err)
 }
 
