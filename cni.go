@@ -106,9 +106,10 @@ func defaultCNIConfig() *libcni {
 			[]string{
 				DefaultCNIDir,
 			},
-			&invoke.DefaultExec{
+			&Exec{
 				RawExec:       &invoke.RawExec{Stderr: os.Stderr},
 				PluginDecoder: version.PluginDecoder{},
+				Environ:       []string{"GOMAXPROCS=2"},
 			},
 		),
 		networkCount: 1,
