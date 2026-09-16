@@ -6,6 +6,7 @@ require (
 	github.com/containerd/continuity v0.2.2
 	github.com/containerd/go-cni v0.0.0-00010101000000-000000000000
 	github.com/stretchr/testify v1.11.1
+	github.com/vishvananda/netlink v1.3.0
 )
 
 require (
@@ -18,6 +19,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.5 // indirect
 	github.com/sirupsen/logrus v1.8.3 // indirect
+	github.com/vishvananda/netns v0.0.4 // indirect
 	go.opentelemetry.io/otel v1.29.0 // indirect
 	go.opentelemetry.io/otel/metric v1.29.0 // indirect
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect
