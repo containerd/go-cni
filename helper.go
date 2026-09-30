@@ -26,8 +26,10 @@ func validateInterfaceConfig(ipConf *types100.IPConfig, ifs int) error {
 	if ipConf == nil {
 		return fmt.Errorf("invalid IP configuration (nil)")
 	}
-	if ipConf.Interface != nil && *ipConf.Interface > ifs {
-		return fmt.Errorf("invalid IP configuration (interface number %d is > number of interfaces %d)", *ipConf.Interface, ifs)
+	// Interface is an index into the result's interface list, so the last valid value is
+	// ifs-1. getInterfaceName indexes that list directly.
+	if ipConf.Interface != nil && (*ipConf.Interface < 0 || *ipConf.Interface >= ifs) {
+		return fmt.Errorf("invalid IP configuration (interface number %d is not in the range [0, %d))", *ipConf.Interface, ifs)
 	}
 	return nil
 }
