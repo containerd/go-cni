@@ -493,3 +493,42 @@ func (m *MockCNI) GetVersionInfo(_ context.Context, pluginType string) (version.
 	args := m.Called(pluginType)
 	return args.Get(0).(version.PluginInfo), args.Error(1)
 }
+
+// TestCreateResultInterfaceIndexOutOfRange checks that an IP configuration naming an
+// interface index outside the result's interface list is rejected, rather than being
+// accepted and then indexing past the end of the slice in getInterfaceName.
+func TestCreateResultInterfaceIndexOutOfRange(t *testing.T) {
+	t.Parallel()
+
+	ipv4, err := types.ParseCIDR("10.0.0.1/24")
+	assert.NoError(t, err)
+
+	for name, index := range map[string]int{
+		"one past the last interface": 1,
+		"negative":                    -1,
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			l := defaultCNIConfig()
+			_, err := l.createResult([]*types100.Result{
+				{
+					CNIVersion: "1.0.0",
+					Interfaces: []*types100.Interface{
+						{
+							Name: "eth0",
+						},
+					},
+					IPs: []*types100.IPConfig{
+						{
+							Interface: types100.Int(index),
+							Address:   *ipv4,
+							Gateway:   net.ParseIP("10.0.0.255"),
+						},
+					},
+				},
+			})
+			assert.ErrorIs(t, err, ErrInvalidResult)
+		})
+	}
+}
