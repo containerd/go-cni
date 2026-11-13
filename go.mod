@@ -3,7 +3,7 @@ module github.com/containerd/go-cni
 go 1.21
 
 require (
-	github.com/containernetworking/cni v1.3.0
+	github.com/containernetworking/cni v1.3.1
 	github.com/sasha-s/go-deadlock v0.3.5
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.29.0
